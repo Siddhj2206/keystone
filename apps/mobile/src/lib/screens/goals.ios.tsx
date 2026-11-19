@@ -27,7 +27,8 @@ export default function Goals(): React.JSX.Element {
             return (
               <Section key={horizon} title={horizonName[horizon]}>
                 {goals.length ? goals.map((goal) => {
-                  const [symbol, color] = goalAreaAppearance[goal.area];
+                  const [symbol, color] = Object.prototype.hasOwnProperty.call(goalAreaAppearance, goal.area)
+                    ? goalAreaAppearance[goal.area] : goalAreaAppearance.other;
                   return (
                     <Button key={goal.id} onPress={() => router.push({ pathname: "/goals/[goalId]", params: { goalId: goal.id } })} modifiers={[buttonStyle("plain")]}>
                       <HStack spacing={12} modifiers={[padding({ vertical: 9 }), frame({ maxWidth: Infinity, alignment: "leading" }), contentShape(shapes.rectangle())]}>

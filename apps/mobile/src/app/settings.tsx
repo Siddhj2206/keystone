@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Platform } from "react-native";
 import { EveningToggle } from "../lib/evening-toggle";
+import { reminderMessage } from '../lib/reminder-message';
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useStore } from "../lib/store";
@@ -120,11 +121,7 @@ export default function Settings(): React.JSX.Element {
             save({ ...data, morning: time, evening })
               .then(() => scheduleReminders(data.tasks, time, evening, true))
               .then((ok) =>
-                setMessage(
-                  ok
-                    ? "Local reminders are ready."
-                    : "Saved. Notifications are unavailable or permission was denied. Enable them in iPhone Settings.",
-                ),
+                setMessage(reminderMessage(ok,Platform.OS)),
               )
               .catch((e) => setMessage(String(e)));
           }}

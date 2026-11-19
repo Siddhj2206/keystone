@@ -45,7 +45,11 @@ export function areaOf(text: string): Area {
   if (/buy|clean|pay|call|laundry|groceries/i.test(text)) return "life";
   return "other";
 }
-export function dateOf(text: string, now = new Date()): string | undefined {
+function scheduleOf(
+  text: string,
+  now: Date,
+): { dueDate?: string; title: string } {
+  const unchanged = { title: text };
   const date = new Date(now);
   date.setHours(18, 0, 0, 0);
   const days = [
@@ -59,24 +63,43 @@ export function dateOf(text: string, now = new Date()): string | undefined {
   ];
   const day = days.findIndex((d) => new RegExp(`\\b${d}\\b`, "i").test(text));
   const ordinal = text.match(/\bby\s+(\d{1,2})(?:st|nd|rd|th)?\b/i);
-  if (/\btomorrow\b/i.test(text)) date.setDate(date.getDate() + 1);
-  else if (/\bnext week\b/i.test(text)) date.setDate(date.getDate() + 7);
-  else if (day >= 0)
+  let datePattern: RegExp;
+  if (/\btomorrow\b/i.test(text)) {
+    date.setDate(date.getDate() + 1);
+    datePattern = /\b(?:(?:on|by|at)\s+)?tomorrow\b/i;
+  } else if (/\bnext week\b/i.test(text)) {
+    date.setDate(date.getDate() + 7);
+    datePattern = /\b(?:(?:on|by|at)\s+)?next week\b/i;
+  } else if (day >= 0) {
     date.setDate(date.getDate() + ((day - date.getDay() + 7) % 7 || 7));
-  else if (ordinal && +ordinal[1] >= 1 && +ordinal[1] <= 31) {
+    datePattern = new RegExp(`\\b(?:(?:on|by|at)\\s+)?${days[day]}\\b`, "i");
+  } else if (ordinal && +ordinal[1] >= 1 && +ordinal[1] <= 31) {
     const target = +ordinal[1];
     if (target < date.getDate()) date.setMonth(date.getMonth() + 1, 1);
     const month = date.getMonth();
     date.setDate(target);
-    if (month !== date.getMonth()) return undefined;
-  } else if (!/\btoday\b/i.test(text)) return undefined;
+    if (month !== date.getMonth()) return unchanged;
+    datePattern = /\bby\s+\d{1,2}(?:st|nd|rd|th)?\b/i;
+  } else if (/\btoday\b/i.test(text)) {
+    datePattern = /\b(?:(?:on|by|at)\s+)?today\b/i;
+  } else return unchanged;
+  let title = text.replace(datePattern, " ");
   const time = text.match(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
-  if (time && +time[1] <= 12 && +(time[2] || 0) < 60)
+  if (time && +time[1] <= 12 && +(time[2] || 0) < 60) {
     date.setHours(
       (+time[1] % 12) + (time[3].toLowerCase() === "pm" ? 12 : 0),
       +(time[2] || 0),
     );
-  return date.toISOString();
+    title = title.replace(time[0], " ");
+  }
+  title = title
+    .replace(/\b(?:on|by|at)\s*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return { dueDate: date.toISOString(), title };
+}
+export function dateOf(text: string, now = new Date()): string | undefined {
+  return scheduleOf(text, now).dueDate;
 }
 export function localOrganize(
   capture: Capture,
@@ -91,6 +114,8 @@ export function localOrganize(
     .map((t) => t.trim().replace(/^[-•]\s*/, ""))
     .filter(Boolean);
   const tasks = chunks.map((title) => {
+    const schedule = scheduleOf(title, now);
+    const cleanTitle = schedule.title.trim() || "Untitled task";
     const area = areaOf(title);
     let goal = [...existing, ...goals].find(
       (g) => g.area === area && area !== "other",
@@ -114,9 +139,9 @@ export function localOrganize(
     }
     return {
       id: id(),
-      title,
+      title: cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1),
       notes: "",
-      dueDate: dateOf(title, now),
+      dueDate: schedule.dueDate,
       priority: /urgent|asap|important|exam|deadline/i.test(title) ? 3 : 2,
       minutes: +(title.match(/(\d+)\s*min/i)?.[1] || 25),
       status: "todo" as const,

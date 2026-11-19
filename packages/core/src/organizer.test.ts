@@ -44,6 +44,52 @@ describe("local organizer", () => {
     expect(new Date(dateOf("tomorrow at 3:30 pm", now)!).getHours()).toBe(15);
     expect(new Date(dateOf("by 2nd", now)!).getMonth()).toBe(11);
   });
+  test.each([
+    [
+      "Finish OS assignment tomorrow at 4 pm",
+      "Finish OS assignment",
+      "tomorrow at 4 pm",
+    ],
+    ["Buy groceries today", "Buy groceries", "today"],
+    ["apply for an internship on Friday", "Apply for an internship", "friday"],
+    ["practice leetcode next week", "Practice leetcode", "next week"],
+    ["submit lab by 25th", "Submit lab", "by 25th"],
+    [
+      "tomorrow at 3:30 pm review resume",
+      "Review resume",
+      "tomorrow at 3:30 pm",
+    ],
+    ["study by tomorrow at 4 pm", "Study", "tomorrow at 4 pm"],
+    ["call today at", "Call", "today"],
+    ["call today on", "Call", "today"],
+    ["call today by", "Call", "today"],
+    ["today", "Untitled task", "today"],
+  ])("cleans title %s without losing its schedule", (text, title, schedule) => {
+    const task = localOrganize(capture(text), [], now).tasks[0];
+    expect(task.title).toBe(title);
+    expect(task.dueDate).toBe(dateOf(schedule, now));
+  });
+  test.each([
+    ["buy groceries", "Buy groceries"],
+    ["learn about on-device recognition", "Learn about on-device recognition"],
+    ["submit lab by 99th", "Submit lab by 99th"],
+    ["submit lab by 31st", "Submit lab by 31st"],
+    ["call at 4 pm", "Call at 4 pm"],
+  ])(
+    "preserves unrecognized schedules and meaningful words in %s",
+    (text, title) => {
+      const task = localOrganize(capture(text), [], now).tasks[0];
+      expect(task.title).toBe(title);
+      expect(task.dueDate).toBeUndefined();
+    },
+  );
+  test("does not strip invalid times or alter capture text", () => {
+    const input = capture("study tomorrow at 14 pm");
+    const task = localOrganize(input, [], now).tasks[0];
+    expect(task.title).toBe("Study at 14 pm");
+    expect(task.dueDate).toBe(dateOf("tomorrow", now));
+    expect(input.text).toBe("study tomorrow at 14 pm");
+  });
   test("invalid dates and absent dates", () => {
     expect(dateOf("by 99th", now)).toBeUndefined();
     expect(dateOf("someday", now)).toBeUndefined();

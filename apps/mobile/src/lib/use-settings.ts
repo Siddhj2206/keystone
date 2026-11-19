@@ -60,7 +60,7 @@ export function useSettings() {
         URL.revokeObjectURL(url);
       } else {
         const file = new File(Paths.cache, "keystone.json");
-        file.write(json);
+        await file.write(json);
         await Sharing.shareAsync(file.uri, { mimeType: "application/json" });
       }
       setMessage("Your export is ready. Keep it somewhere safe.");

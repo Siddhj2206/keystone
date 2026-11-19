@@ -36,7 +36,7 @@ export async function loadRows(): Promise<Rows | undefined> {
     return rows;
   }
   const read = async <T,>(table: Table): Promise<T[]> => {
-    const all = await c.getAllAsync<{ id: string; json: string }>(`SELECT id, json FROM ${table}`);
+    const all = await c.getAllAsync<{ id: string; json: string }>(`SELECT id, json FROM ${table} ORDER BY rowid`);
     saved[table] = new Map(all.map((r) => [r.id, r.json]));
     return all.map((r) => JSON.parse(r.json));
   };
@@ -62,12 +62,12 @@ function columns(table: Table, row: Task | Goal | Capture): unknown[] {
   return [x.processed ? 1 : 0, x.createdAt];
 }
 const insert: Record<Table, string> = {
-  tasks: "INSERT OR REPLACE INTO tasks (id, status, due_date, goal_id, json) VALUES (?,?,?,?,?)",
-  goals: "INSERT OR REPLACE INTO goals (id, area, horizon, json) VALUES (?,?,?,?)",
-  captures: "INSERT OR REPLACE INTO captures (id, processed, created_at, json) VALUES (?,?,?,?)",
+  tasks: "INSERT INTO tasks (id, status, due_date, goal_id, json) VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=excluded.status, due_date=excluded.due_date, goal_id=excluded.goal_id, json=excluded.json",
+  goals: "INSERT INTO goals (id, area, horizon, json) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET area=excluded.area, horizon=excluded.horizon, json=excluded.json",
+  captures: "INSERT INTO captures (id, processed, created_at, json) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET processed=excluded.processed, created_at=excluded.created_at, json=excluded.json",
 };
 
-/** Writes only the rows that changed since the last load or save. */
+/** Writes only the rows that changed since the last load or save. Upserts keep each row's rowid, so load order matches array order. */
 export async function saveRows(rows: Rows): Promise<void> {
   const c = await db;
   const next = { tasks: new Map<string, string>(), goals: new Map<string, string>(), captures: new Map<string, string>(), prefs: new Map<string, string>() };

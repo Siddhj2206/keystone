@@ -9,7 +9,7 @@ test("backup is due weekly", () => {
   expect(backupDue("2026-11-12T10:00:00Z", now)).toBe(true);
 });
 test("round-trips an export and drops metadata", () => {
-  const data = { tasks: [{ id: "t", title: "Lab" }], goals: [{ id: "g", title: "Sem" }], captures: [], morning: "09:00" } as never;
+  const data = { tasks: [{ id: "t", title: "Lab", area: "academics", status: "todo" }], goals: [{ id: "g", title: "Sem", area: "academics", horizon: "short" }], captures: [], morning: "09:00" } as never;
   const back = parseBackup(backupJson(data, now));
   expect(back).toEqual(data);
   expect(back).not.toHaveProperty("version");
@@ -17,7 +17,7 @@ test("round-trips an export and drops metadata", () => {
 test("accepts v1 exports without captures", () => {
   expect(parseBackup(JSON.stringify({ version: 1, tasks: [], goals: [] })).captures).toEqual([]);
 });
-test.each(["{}", "[]", JSON.stringify({ tasks: [{}], goals: [] }), JSON.stringify({ tasks: [], goals: [{ id: 1 }] })])(
+test.each(["{}", "[]", JSON.stringify({ tasks: [{}], goals: [] }), JSON.stringify({ tasks: [], goals: [{ id: 1 }] }), JSON.stringify({ tasks: [], goals: [{ id: "g", title: "Sem" }] })])(
   "rejects %s",
   (json) => expect(() => parseBackup(json)).toThrow(),
 );

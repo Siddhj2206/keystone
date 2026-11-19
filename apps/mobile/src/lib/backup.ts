@@ -23,10 +23,11 @@ export function parseBackup(json: string): BackupData & Record<string, unknown> 
   const parsed = JSON.parse(json);
   if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.tasks) || !Array.isArray(parsed.goals))
     throw Error("That file isn't a Keystone backup.");
+  const str = (x: unknown) => typeof x === "string";
   for (const t of parsed.tasks)
-    if (typeof t?.id !== "string" || typeof t?.title !== "string") throw Error("The backup has a damaged task.");
+    if (!str(t?.id) || !str(t?.title) || !str(t?.area) || !str(t?.status)) throw Error("The backup has a damaged task.");
   for (const g of parsed.goals)
-    if (typeof g?.id !== "string" || typeof g?.title !== "string") throw Error("The backup has a damaged goal.");
+    if (!str(g?.id) || !str(g?.title) || !str(g?.area) || !str(g?.horizon)) throw Error("The backup has a damaged goal.");
   const { version: _v, exportedAt: _e, key: _k, ...data } = parsed;
   return { ...data, captures: Array.isArray(parsed.captures) ? parsed.captures : [] };
 }

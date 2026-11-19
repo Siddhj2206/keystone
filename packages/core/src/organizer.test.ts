@@ -196,3 +196,9 @@ describe("local organizer", () => {
     );
   });
 });
+
+test("dates are read relative to when the capture was made", async () => {
+  const { organize } = await import("./index");
+  const plan = await organize({ id: "c", text: "submit lab tomorrow", source: "text", createdAt: "2026-01-10T06:00:00.000Z", processed: false }, []);
+  expect(plan.tasks[0].dueDate?.slice(0, 10)).toBe("2026-01-11");
+});

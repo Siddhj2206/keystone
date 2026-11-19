@@ -12,6 +12,7 @@ const fake = {
   runAsync: jest.fn(async (sql: string, ...args: string[]) => {
     runs.push(sql.split(" ").slice(0, 3).join(" "));
     const t = sql.match(/(?:INTO|FROM) (\w+)/)![1];
+    if (!sql.startsWith("DELETE") && t !== "prefs") expect(sql).toMatch(/ON CONFLICT\(id\) DO UPDATE/);
     tables[t] ??= new Map();
     if (sql.startsWith("DELETE")) tables[t].delete(args[0]);
     else tables[t].set(args[0], args[args.length - 1]);
@@ -33,7 +34,7 @@ test("saves only changed rows and deletes removed ones", async () => {
   const done = { ...task, status: "done" as const };
   const t2 = { ...task, id: "t2" };
   await saveRows({ tasks: [done, t2], goals: [], captures: [], prefs: { morning: "08:00", evening: true } });
-  expect(runs).toEqual(["INSERT OR REPLACE", "INSERT OR REPLACE"]);
+  expect(runs).toEqual(["INSERT INTO tasks", "INSERT INTO tasks"]);
   runs.length = 0;
   await saveRows({ tasks: [t2], goals: [], captures: [], prefs: { morning: "08:00", evening: true } });
   expect(runs).toEqual(["DELETE FROM tasks"]);

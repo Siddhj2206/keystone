@@ -26,7 +26,7 @@ export function parseBackup(json: string): BackupData & Record<string, unknown> 
     throw Error("That file isn't a Keystone backup.");
   const str = (x: unknown) => typeof x === "string";
   const areas=['academics','career','skills','health','life','other'];
-  const optionalDate=(x:unknown)=>x===undefined||isISODateString(x);
+  const optionalDate=(x:unknown)=>x===undefined||x===''||isISODateString(x);
   for (const t of parsed.tasks)
     if (!str(t?.id) || !str(t?.title) || !areas.includes(t?.area) || !['todo','done','snoozed'].includes(t?.status) || !str(t?.notes) || !str(t?.captureId) || ![1,2,3].includes(t?.priority) || !Number.isFinite(t?.minutes) || t.minutes<=0 || (t.goalId!==undefined&&!str(t.goalId)) || !optionalDate(t.dueDate) || !optionalDate(t.completedAt) || !optionalDate(t.checkBy)) throw Error("The backup has a damaged task.");
   for (const g of parsed.goals)
@@ -36,7 +36,13 @@ export function parseBackup(json: string): BackupData & Record<string, unknown> 
     if(!str(c?.id)||!str(c?.text)||!['text','voice'].includes(c?.source)||!isISODateString(c?.createdAt)||typeof c?.processed!=='boolean') throw Error('The backup has a damaged capture.');
   if((parsed.morning!==undefined&&(!str(parsed.morning)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(parsed.morning))) || (parsed.evening!==undefined&&typeof parsed.evening!=='boolean') || !optionalDate(parsed.lastBackupAt) || (parsed.rules!==undefined&&(!parsed.rules||typeof parsed.rules!=='object'||Array.isArray(parsed.rules)||!Object.values(parsed.rules).every(area=>areas.includes(area as string))))) throw Error('The backup has damaged preferences.');
   const { version: _v, exportedAt: _e, key: _k, ...data } = parsed;
-  return { ...data, captures: Array.isArray(parsed.captures) ? parsed.captures : [] };
+  return {
+    ...data,
+    tasks: parsed.tasks.map((t:Task)=>({...t,dueDate:t.dueDate||undefined,completedAt:t.completedAt||undefined,checkBy:t.checkBy||undefined})),
+    goals: parsed.goals.map((g:Goal)=>({...g,targetDate:g.targetDate||undefined})),
+    lastBackupAt: data.lastBackupAt||undefined,
+    captures: Array.isArray(parsed.captures) ? parsed.captures : [],
+  };
 }
 
 /** Weekly JSON into Documents/Backups, which the Files app shows under On My iPhone › Keystone. */

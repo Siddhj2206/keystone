@@ -134,7 +134,7 @@ export default function Goals(): React.JSX.Element {
             placeholder="Target YYYY-MM-DD (optional)"
             value={editing.targetDate || ""}
             onChangeText={(targetDate) =>
-              setEditing({ ...editing, targetDate })
+              setEditing({ ...editing, targetDate: targetDate || undefined })
             }
           />
           <Button

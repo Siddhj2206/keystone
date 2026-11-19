@@ -20,6 +20,15 @@ test("round-trips an export and drops metadata", () => {
 test("accepts v1 exports without captures", () => {
   expect(parseBackup(JSON.stringify({ version: 1, tasks: [], goals: [] })).captures).toEqual([]);
 });
+test('round-trips cleared goal and optional task dates as absent dates, preserving empty notes',()=>{
+ const json=backupJson({tasks:[{...task,dueDate:'',completedAt:'',checkBy:''}],goals:[{...goal,targetDate:''}],captures:[capture]} as never,now);
+ const restored=parseBackup(json);expect(restored.goals[0].targetDate).toBeUndefined();expect(restored.tasks[0].dueDate).toBeUndefined();expect(restored.tasks[0].completedAt).toBeUndefined();expect(restored.tasks[0].checkBy).toBeUndefined();expect(restored.goals[0].notes).toBe('');expect(restored.tasks[0].notes).toBe('');
+ expect(backupJson(restored,now)).not.toContain('"targetDate"');
+});
+test('valid optional dates survive normalization and invalid nonempty dates still fail',()=>{
+ const targetDate='2026-11-20';expect(parseBackup(JSON.stringify({tasks:[],goals:[{...goal,targetDate}]})).goals[0].targetDate).toBe(targetDate);
+ expect(()=>parseBackup(JSON.stringify({tasks:[],goals:[{...goal,targetDate:'not a date'}]}))).toThrow();
+});
 test.each(["{}", "[]", JSON.stringify({ tasks: [{}], goals: [] }), JSON.stringify({ tasks: [], goals: [{ id: 1 }] }), JSON.stringify({ tasks: [], goals: [{ id: "g", title: "Sem" }] })])(
   "rejects %s",
   (json) => expect(() => parseBackup(json)).toThrow(),

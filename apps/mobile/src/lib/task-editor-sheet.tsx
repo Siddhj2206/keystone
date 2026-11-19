@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BottomSheet, Button, DatePicker, Form, LabeledContent, NavigationStack, Picker, Section, Text, Toggle, Toolbar, ToolbarItem } from "@expo/ui/swift-ui";
+import { BottomSheet, Button, DatePicker, Form, Group, LabeledContent, NavigationStack, Picker, Section, Text, Toggle, Toolbar, ToolbarItem } from "@expo/ui/swift-ui";
 import { accessibilityLabel, datePickerStyle, disabled, keyboardType, multilineTextAlignment, navigationBarTitleDisplayMode, navigationTitle, presentationDetents, presentationDragIndicator, tag } from "@expo/ui/swift-ui/modifiers";
 import { isISODateString, type Goal, type Task } from "@keystone/core";
 import { NativeField } from "./native-ui";
@@ -18,23 +18,24 @@ export function EditorSheet({ title, children, onSave, onClose, saveDisabled, co
     <BottomSheet
       isPresented
       onIsPresentedChange={(open) => { if (!open) onClose(); }}
-      modifiers={[presentationDetents(compact ? ["medium", "large"] : ["large"]), presentationDragIndicator("visible")]}
     >
-      <NavigationStack>
-        <Toolbar>
-          <Form modifiers={[navigationTitle(title), navigationBarTitleDisplayMode("inline")]}>
-            {children}
-          </Form>
-          <Toolbar.Content>
-            <ToolbarItem placement="cancellationAction">
-              <Button label="Cancel" onPress={onClose} />
-            </ToolbarItem>
-            <ToolbarItem placement="confirmationAction">
-              <Button label="Save" onPress={onSave} modifiers={[disabled(saveDisabled)]} />
-            </ToolbarItem>
-          </Toolbar.Content>
-        </Toolbar>
-      </NavigationStack>
+      <Group modifiers={[presentationDetents(compact ? ["medium", "large"] : ["large"]), presentationDragIndicator("visible")]}>
+        <NavigationStack>
+          <Toolbar>
+            <Form modifiers={[navigationTitle(title), navigationBarTitleDisplayMode("inline")]}>
+              {children}
+            </Form>
+            <Toolbar.Content>
+              <ToolbarItem placement="cancellationAction">
+                <Button label="Cancel" onPress={onClose} />
+              </ToolbarItem>
+              <ToolbarItem placement="confirmationAction">
+                <Button label="Save" onPress={onSave} modifiers={[disabled(saveDisabled)]} />
+              </ToolbarItem>
+            </Toolbar.Content>
+          </Toolbar>
+        </NavigationStack>
+      </Group>
     </BottomSheet>
   );
 }

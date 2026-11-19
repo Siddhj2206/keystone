@@ -1,7 +1,7 @@
-jest.mock('react-native',()=>({Platform:{OS:'ios'}}));
-jest.mock('expo-notifications',()=>({getPermissionsAsync:jest.fn(),requestPermissionsAsync:jest.fn(),cancelAllScheduledNotificationsAsync:jest.fn(),scheduleNotificationAsync:jest.fn(),SchedulableTriggerInputTypes:{DAILY:'daily',DATE:'date'}}));
 import * as Notifications from 'expo-notifications';
 import { scheduleReminders } from './reminders';
+jest.mock('react-native',()=>({Platform:{OS:'ios'}}));
+jest.mock('expo-notifications',()=>({getPermissionsAsync:jest.fn(),requestPermissionsAsync:jest.fn(),cancelAllScheduledNotificationsAsync:jest.fn(),scheduleNotificationAsync:jest.fn(),SchedulableTriggerInputTypes:{DAILY:'daily',DATE:'date'}}));
 beforeEach(()=>{jest.clearAllMocks();(Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({granted:true});(Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValue({granted:true});});
 test('overlapping schedules are serialized with stable identifiers and latest content',async()=>{
  const active=new Map();let release!:()=>void;const gate=new Promise<void>(resolve=>{release=resolve;});let first=true;

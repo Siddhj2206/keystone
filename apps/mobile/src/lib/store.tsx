@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { Platform } from "react-native";
 import * as SQLite from "expo-sqlite";
 import * as SecureStore from "expo-secure-store";
-import { Capture, Goal, Task, id, organize } from "@keystone/core";
+import { Capture, Goal, Task, id, organize, hasCaptureContent } from "@keystone/core";
 import { createStateQueue } from './state-queue';
 
 interface Data {
@@ -74,7 +74,7 @@ export function StoreProvider({
     text: string,
     source: "text" | "voice",
   ): Promise<string> {
-    if (!text.trim()) throw Error("Add a thought first.");
+    if (!hasCaptureContent(text)) throw Error("Add a thought with some letters or numbers first.");
     const item: Capture = {
       id: id(),
       text: text.trim(),

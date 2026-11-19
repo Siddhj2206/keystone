@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { hasCaptureContent } from '@keystone/core';
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Glass } from "../lib/glass";
@@ -129,7 +130,7 @@ export default function Capture(): React.JSX.Element {
         />
       </Glass>
       <Button
-        disabled={busy || listening || !text.trim()}
+        disabled={busy || listening || !hasCaptureContent(text)}
         title={
           busy ? "Finding a place for everything…" : "Organize my thoughts  →"
         }

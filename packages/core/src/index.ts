@@ -35,6 +35,7 @@ export interface Plan {
 }
 export const id = (): string =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+export const hasCaptureContent = (text: string): boolean => /[\p{L}\p{N}]/u.test(text);
 export function isISODateString(value: unknown): value is string {
   if (typeof value !== 'string') return false;
   const parts = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/);
@@ -120,7 +121,7 @@ export function localOrganize(
       /\n|;|,(?!\s*\d)|\s+and\s+(?=(?:then\s+)?(?:finish|submit|apply|update|learn|practice|buy|call|study|prepare|clean|pay|do|book|review|solve)\b)/i,
     )
     .map((t) => t.trim().replace(/^[-•]\s*/, ""))
-    .filter(Boolean);
+    .filter(hasCaptureContent);
   const tasks = chunks.map((title) => {
     const schedule = scheduleOf(title, now);
     const cleanTitle = schedule.title.trim() || "Untitled task";
@@ -165,6 +166,7 @@ export async function organize(
   existing: Goal[],
   key?: string,
 ): Promise<Plan> {
+  if(!hasCaptureContent(capture.text)) return localOrganize(capture,existing);
   if (key)
     try {
       const response = await fetch(

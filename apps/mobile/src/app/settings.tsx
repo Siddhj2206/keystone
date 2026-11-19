@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Platform, Switch, View } from "react-native";
+import { Platform } from "react-native";
+import { EveningToggle } from "../lib/evening-toggle";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useStore } from "../lib/store";
@@ -108,16 +109,7 @@ export default function Settings(): React.JSX.Element {
           onChangeText={setTime}
           placeholder="09:00"
         />
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Label>Evening review · 20:00</Label>
-          <Switch value={evening} onValueChange={setEvening} />
-        </View>
+        <EveningToggle value={evening} onChange={setEvening} />
         <Button
           title="Save reminders"
           onPress={() => {

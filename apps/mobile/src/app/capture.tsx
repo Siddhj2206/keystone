@@ -1,4 +1,7 @@
 import React, { useRef, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { Glass } from "../lib/glass";
 import { Platform, Pressable, View } from "react-native";
 import {
   ExpoSpeechRecognitionModule,
@@ -59,6 +62,9 @@ export default function Capture(): React.JSX.Element {
     setBusy(true);
     try {
       const result = await capture(text, voice.current ? "voice" : "text");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+        () => {},
+      );
       setText("");
       voice.current = false;
       setMessage(result);
@@ -75,45 +81,53 @@ export default function Capture(): React.JSX.Element {
       subtitle="Messy thoughts welcome. We'll take care of the sorting."
     >
       <View style={{ alignItems: "center", paddingVertical: 20, gap: 16 }}>
-        <Pressable
-          accessibilityLabel={
-            listening ? "Stop recording" : "Start voice capture"
-          }
-          accessibilityRole="button"
-          onPress={() => void mic()}
-          disabled={busy}
-          style={{
-            width: 110,
-            height: 110,
-            borderRadius: 55,
-            backgroundColor: c.accent,
-            alignItems: "center",
-            justifyContent: "center",
-            borderWidth: 10,
-            borderColor: c.line,
-          }}
+        <Glass
+          style={{ borderRadius: 64, padding: 8, backgroundColor: c.card }}
         >
-          <Label style={{ fontSize: 40, lineHeight: 50, color: c.accentInk }}>
-            {listening ? "■" : "♩"}
-          </Label>
-        </Pressable>
+          <Pressable
+            accessibilityLabel={
+              listening ? "Stop recording" : "Start voice capture"
+            }
+            accessibilityRole="button"
+            onPress={() => void mic()}
+            disabled={busy}
+            style={{
+              width: 110,
+              height: 110,
+              borderRadius: 55,
+              backgroundColor: c.accent,
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 10,
+              borderColor: c.line,
+            }}
+          >
+            <Ionicons
+              name={listening ? "stop" : "mic"}
+              size={38}
+              color={c.accentInk}
+            />
+          </Pressable>
+        </Glass>
         <Label style={{ color: c.muted, fontSize: 13 }}>
           {listening
             ? "Listening… tap to finish"
             : "Tap to talk. No need to organize it."}
         </Label>
       </View>
-      <Input
-        accessibilityLabel="Brain dump"
-        multiline
-        value={text}
-        onChangeText={setText}
-        editable={!busy}
-        placeholder={
-          "What’s on your mind?\n\n“Finish my OS assignment tomorrow, apply for an internship and practice leetcode on Friday…”"
-        }
-        style={{ minHeight: 220, textAlignVertical: "top", lineHeight: 27 }}
-      />
+      <Glass style={{ borderRadius: 20 }}>
+        <Input
+          accessibilityLabel="Brain dump"
+          multiline
+          value={text}
+          onChangeText={setText}
+          editable={!busy}
+          placeholder={
+            "What’s on your mind?\n\n“Finish my OS assignment tomorrow, apply for an internship and practice leetcode on Friday…”"
+          }
+          style={{ minHeight: 220, textAlignVertical: "top", lineHeight: 27 }}
+        />
+      </Glass>
       <Button
         disabled={busy || listening || !text.trim()}
         title={

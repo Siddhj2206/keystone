@@ -2,6 +2,10 @@
 
 A calm, local-first goals planner for a busy brain. Brain-dump with text or voice; Keystone splits it into actionable tasks, finds dates, and links tasks to short- and long-term goals. Today highlights just three next steps. No accounts, backend, subscription or push service.
 
+## A little delight
+
+Pastel aurora gradients, colorful area accents, gentle completion celebrations and haptics make the routine feel lighter. iOS 26 uses native Liquid Glass cards and capture surfaces (`expo-glass-effect`), native liquid-glass tabs and a SwiftUI evening toggle (`@expo/ui`). Older iOS and web retain translucent cards over the same dark-mode-aware gradients. The CI explicitly selects Xcode 26 and prints the iPhone SDK version. Reduced-motion settings skip completion animation.
+
 ## Workspace
 
 - `apps/mobile`: Expo SDK 58, TypeScript, Expo Router, SQLite, local notifications, native speech recognition and SecureStore.

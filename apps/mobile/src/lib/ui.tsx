@@ -1,4 +1,7 @@
 import React from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Glass } from "./glass";
 import {
   Text,
   View,
@@ -11,21 +14,21 @@ export function usePalette() {
   const dark = useColorScheme() === "dark";
   return dark
     ? {
-        bg: "#111c19",
-        card: "#1c2b26",
-        ink: "#edf5ed",
-        muted: "#a3b6ad",
-        line: "#35473e",
-        accent: "#b9d6a2",
-        accentInk: "#173829",
+        bg: "#16132e",
+        card: "#292241c9",
+        ink: "#faf4ff",
+        muted: "#bdb1d5",
+        line: "#9e8ac533",
+        accent: "#d3b2ff",
+        accentInk: "#2d174b",
       }
     : {
-        bg: "#f5f5ed",
-        card: "#ffffff",
-        ink: "#20392e",
-        muted: "#738074",
-        line: "#e0e5da",
-        accent: "#285b43",
+        bg: "#f4efff",
+        card: "#ffffffb8",
+        ink: "#30244c",
+        muted: "#796c90",
+        line: "#bca4d633",
+        accent: "#7952c9",
         accentInk: "#ffffff",
       };
 }
@@ -116,45 +119,58 @@ export function Page({
   children: React.ReactNode;
 }): React.JSX.Element {
   const c = usePalette();
+  const insets = useSafeAreaInsets();
+  const dark = useColorScheme() === "dark";
   return (
-    <ScrollView
-      contentContainerStyle={{
-        padding: 24,
-        paddingTop: 32,
-        paddingBottom: 40,
-        gap: 20,
-        width: "100%",
-        maxWidth: 650,
-        alignSelf: "center",
-      }}
-      style={{ flex: 1, backgroundColor: c.bg }}
+    <LinearGradient
+      colors={
+        dark
+          ? ["#251642", "#131f39", "#291c38"]
+          : ["#e7dcff", "#e1f5ff", "#fff0df"]
+      }
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
     >
-      <View>
-        <Label
-          style={{
-            fontSize: 11,
-            letterSpacing: 2,
-            color: c.muted,
-            fontWeight: "700",
-          }}
-        >
-          {eyebrow.toUpperCase()}
-        </Label>
-        <Label
-          style={{
-            fontSize: 36,
-            lineHeight: 48,
-            fontWeight: "700",
-            letterSpacing: -1.2,
-            marginTop: 8,
-          }}
-        >
-          {title}
-        </Label>
-        <Label style={{ color: c.muted, marginTop: 4 }}>{subtitle}</Label>
-      </View>
-      {children}
-    </ScrollView>
+      <ScrollView
+        contentContainerStyle={{
+          padding: 24,
+          paddingTop: Math.max(insets.top, 24) + 16,
+          paddingBottom: 110,
+          gap: 20,
+          width: "100%",
+          maxWidth: 650,
+          alignSelf: "center",
+        }}
+        style={{ flex: 1 }}
+      >
+        <View>
+          <Label
+            style={{
+              fontSize: 11,
+              letterSpacing: 2,
+              color: c.muted,
+              fontWeight: "700",
+            }}
+          >
+            {eyebrow.toUpperCase()}
+          </Label>
+          <Label
+            style={{
+              fontSize: 38,
+              lineHeight: 44,
+              fontWeight: "700",
+              letterSpacing: -1.2,
+              marginTop: 8,
+            }}
+          >
+            {title}
+          </Label>
+          <Label style={{ color: c.muted, marginTop: 4 }}>{subtitle}</Label>
+        </View>
+        {children}
+      </ScrollView>
+    </LinearGradient>
   );
 }
 export function Card({
@@ -164,10 +180,10 @@ export function Card({
 }): React.JSX.Element {
   const c = usePalette();
   return (
-    <View
+    <Glass
       style={{
         backgroundColor: c.card,
-        borderRadius: 20,
+        borderRadius: 26,
         padding: 20,
         borderWidth: 1,
         borderColor: c.line,
@@ -175,6 +191,6 @@ export function Card({
       }}
     >
       {children}
-    </View>
+    </Glass>
   );
 }

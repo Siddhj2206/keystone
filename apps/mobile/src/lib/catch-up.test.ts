@@ -9,7 +9,7 @@ import type { Data } from "./store";
 const capture = (id: string, processed = false) => ({ id, text: id, source: "text" as const, createdAt: "", processed });
 const make = (captures = [capture("a"), capture("b", true), capture("c")]) =>
   createStateQueue<Data>({ tasks: [], goals: [], captures, morning: "09:00", evening: false }, async () => {}, () => {});
-const plan = (id: string) => ({ tasks: [{ id: `t-${id}` }], goals: [], engine: "local" });
+const plan = (id: string) => ({ tasks: [{ id: `t-${id}`, title: id, area: "academics" }], goals: [], engine: "local" });
 
 beforeEach(() => organize.mockReset());
 test("retries only unprocessed captures and keeps going after a failure", async () => {

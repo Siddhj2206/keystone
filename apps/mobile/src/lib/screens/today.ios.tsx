@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Alert, PlatformColor } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, ContentUnavailableView, ContextMenu, HStack, Image, List, Menu, ProgressView, Section, Spacer, SwipeActions, Text, VStack } from "@expo/ui/swift-ui";
-import { accessibilityHidden, accessibilityLabel, buttonStyle, contentShape, controlSize, font, foregroundStyle, frame, listRowBackground, listRowInsets, listRowSeparator, listStyle, padding, progressViewStyle, shapes, tint } from "@expo/ui/swift-ui/modifiers";
+import { Button, ContextMenu, HStack, Image, List, Menu, ProgressView, Section, Spacer, SwipeActions, Text, VStack } from "@expo/ui/swift-ui";
+import { accessibilityHidden, accessibilityLabel, buttonStyle, contentShape, controlSize, font, foregroundStyle, frame, listRowBackground, listRowInsets, listRowSeparator, listStyle, multilineTextAlignment, padding, progressViewStyle, shapes, tint } from "@expo/ui/swift-ui/modifiers";
 import { planDay, type Area, type NowAction, type Task } from "@keystone/core";
 import { accent, NativeHost, secondary } from "../native-ui";
 import { CompletionMark, TaskRow, useCompletion } from "../native-task-row";
@@ -100,12 +100,16 @@ export default function Today(): React.JSX.Element {
         ]}>{now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</Text>
         <Section title={focus.length ? "Up next" : undefined}>
           {focus[0] ? <NowRow key={focus[0].id} task={focus[0]} onEdit={() => setEditing(focus[0])} /> :
-            <ContentUnavailableView
-              title={allDone ? "All done for today" : remaining.length ? "Nothing on deck" : "A fresh start"}
-              systemImage={allDone ? "checkmark.seal.fill" : "sun.max"}
-              description={allDone ? "You cleared your list. Enjoy the space you made." : remaining.length ? "You can pick up the items below when you’re ready." : "Capture what’s on your mind to get started."}
-              actions={<Button label="New Capture" systemImage="plus" onPress={() => router.navigate("/capture")} modifiers={[buttonStyle("bordered")]} />}
-            />}
+            <VStack spacing={10} modifiers={[frame({ maxWidth: Infinity }), padding({ vertical: 26, horizontal: 8 })]}>
+              <Image systemName={allDone ? "checkmark.seal.fill" : "sun.max"} size={35} color={accent} modifiers={[accessibilityHidden(true)]} />
+              <Text modifiers={[font({ textStyle: "title2", weight: "semibold" }), multilineTextAlignment("center")]}>
+                {allDone ? "All done for today" : remaining.length ? "Nothing on deck" : "A fresh start"}
+              </Text>
+              <Text modifiers={[font({ textStyle: "subheadline" }), foregroundStyle(secondary), multilineTextAlignment("center")]}>
+                {allDone ? "You cleared your list. Enjoy the space you made." : remaining.length ? "You can pick up the items below when you’re ready." : "Capture what’s on your mind to get started."}
+              </Text>
+              <Button label="New Capture" onPress={() => router.navigate("/capture")} modifiers={[buttonStyle("bordered"), controlSize("large"), padding({ top: 5 })]} />
+            </VStack>}
         </Section>
         {check && (
           <Section title={`Check · ${pending.length}`} footer={<Text>Keystone keeps its guess if you skip this.</Text>}>

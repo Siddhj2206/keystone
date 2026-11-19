@@ -16,7 +16,7 @@ export function ruleWord(title: string): string | undefined {
 /** Applies learned corrections, and sends guesses Keystone isn't sure about to the Check stack. */
 export function triage(tasks: Task[], rules: Rules = {}, now = new Date()): Task[] {
   return tasks.map((t) => {
-    const learned = (t.title.toLowerCase().match(/[a-z0-9]+/g) ?? []).map((w) => rules[w]).find(Boolean);
+    const learned = (t.title.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter((w) => Object.prototype.hasOwnProperty.call(rules, w)).map((w) => rules[w])[0];
     if (learned) return { ...t, area: learned };
     if (t.area !== "other") return t;
     return { ...t, checkBy: new Date(now.getTime() + CHECK_HOURS * 3600000).toISOString() };

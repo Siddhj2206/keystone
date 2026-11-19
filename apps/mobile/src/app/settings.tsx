@@ -13,6 +13,13 @@ export default function Settings(): React.JSX.Element {
   const [draft, setDraft] = useState(key);
   const [time, setTime] = useState(data.morning);
   const [evening, setEvening] = useState(data.evening);
+  // A restore replaces the saved prefs; show them instead of the old draft.
+  const [shown, setShown] = useState({ morning: data.morning, evening: data.evening });
+  if (shown.morning !== data.morning || shown.evening !== data.evening) {
+    setShown({ morning: data.morning, evening: data.evening });
+    setTime(data.morning);
+    setEvening(data.evening);
+  }
   const [message, setMessage] = useState("");
   async function exportData(): Promise<void> {
     try {

@@ -1,0 +1,8 @@
+{
+  "extends": "./apps/mobile/tsconfig.json",
+  "include": ["apps/**/*.ts", "apps/**/*.tsx", "packages/**/*.ts"],
+  "compilerOptions": {
+    "types": ["jest", "react", "node"],
+    "ignoreDeprecations": "6.0"
+  }
+}

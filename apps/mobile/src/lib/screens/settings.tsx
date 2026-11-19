@@ -1,52 +1,10 @@
-import React, { useState } from "react";
-import { Platform } from "react-native";
+import React from "react";
 import { EveningToggle } from "../evening-toggle";
-import { reminderMessage } from '../reminder-message';
-import { File, Paths } from "expo-file-system";
-import * as Sharing from "expo-sharing";
-import { useStore } from "../store";
 import { Button, Card, Input, Label, Page } from "../ui";
-import { scheduleReminders } from "../reminders";
 import { RestoreButton } from "../restore-button";
+import { useSettings } from "../use-settings";
 export default function Settings(): React.JSX.Element {
-  const { data, save, key, setKey } = useStore();
-  const [draft, setDraft] = useState(key);
-  const [time, setTime] = useState(data.morning);
-  const [evening, setEvening] = useState(data.evening);
-  // A restore replaces the saved prefs; show them instead of the old draft.
-  const [shown, setShown] = useState({ morning: data.morning, evening: data.evening });
-  if (shown.morning !== data.morning || shown.evening !== data.evening) {
-    setShown({ morning: data.morning, evening: data.evening });
-    setTime(data.morning);
-    setEvening(data.evening);
-  }
-  const [message, setMessage] = useState("");
-  async function exportData(): Promise<void> {
-    try {
-      const json = JSON.stringify(
-        { version: 1, exportedAt: new Date().toISOString(), ...data },
-        null,
-        2,
-      );
-      if (Platform.OS === "web") {
-        const url = URL.createObjectURL(
-          new Blob([json], { type: "application/json" }),
-        );
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "keystone.json";
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
-        const file = new File(Paths.cache, "keystone.json");
-        file.write(json);
-        await Sharing.shareAsync(file.uri, { mimeType: "application/json" });
-      }
-      setMessage("Your export is ready. Keep it somewhere safe.");
-    } catch (e) {
-      setMessage(String(e));
-    }
-  }
+  const { draft, setDraft, time, setTime, evening, setEvening, message, setMessage, saveKey, removeKey, saveReminders, exportData } = useSettings();
   return (
     <Page
       eyebrow="Make it yours"
@@ -82,29 +40,12 @@ export default function Settings(): React.JSX.Element {
         />
         <Button
           title="Save key securely"
-          onPress={() => {
-            setKey(draft.trim())
-              .then(() =>
-                setMessage(
-                  draft
-                    ? "Key saved in your secure keychain."
-                    : "Key removed. Using offline sorting.",
-                ),
-              )
-              .catch((e) => setMessage(String(e)));
-          }}
+          onPress={() => void saveKey()}
         />
         <Button
           quiet
           title="Remove key · use local only"
-          onPress={() => {
-            setKey("")
-              .then(() => {
-                setDraft("");
-                setMessage("Local-only sorting enabled.");
-              })
-              .catch((e) => setMessage(String(e)));
-          }}
+          onPress={() => void removeKey()}
         />
       </Card>
       <Card>
@@ -121,18 +62,7 @@ export default function Settings(): React.JSX.Element {
         <EveningToggle value={evening} onChange={setEvening} />
         <Button
           title="Save reminders"
-          onPress={() => {
-            if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
-              setMessage("Enter a valid 24-hour time, like 09:00.");
-              return;
-            }
-            save({ ...data, morning: time, evening })
-              .then(() => scheduleReminders(data.tasks, time, evening, true))
-              .then((ok) =>
-                setMessage(reminderMessage(ok,Platform.OS)),
-              )
-              .catch((e) => setMessage(String(e)));
-          }}
+          onPress={() => void saveReminders()}
         />
         <Label style={{ fontSize: 12 }}>
           No push notifications or APNs. Focus counts reflect your last app

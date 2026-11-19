@@ -19,7 +19,7 @@ type FieldProps = Omit<React.ComponentProps<typeof TextField>, "text" | "onTextC
 export function NativeField({ value, onChange, ...props }: FieldProps) {
   const text = useNativeState(value);
   useEffect(() => {
-    if (text.value !== value) text.value = value;
+    if (text.get() !== value) text.set(value);
   }, [text, value]);
   return <TextField {...props} text={text} onTextChange={onChange} />;
 }
@@ -27,7 +27,7 @@ export function NativeField({ value, onChange, ...props }: FieldProps) {
 export function NativeSecureField({ value, onChange }: Pick<FieldProps, "value" | "onChange">) {
   const text = useNativeState(value);
   useEffect(() => {
-    if (text.value !== value) text.value = value;
+    if (text.get() !== value) text.set(value);
   }, [text, value]);
   return <SecureField
     text={text}

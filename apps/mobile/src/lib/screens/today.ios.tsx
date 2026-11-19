@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
-import { Button, ContentUnavailableView, HStack, Image, List, Menu, Section, Spacer, Text, VStack } from "@expo/ui/swift-ui";
-import { buttonStyle, controlSize, font, foregroundStyle, frame, listStyle, padding } from "@expo/ui/swift-ui/modifiers";
+import { Button, ContentUnavailableView, HStack, Image, List, Menu, ProgressView, Section, Spacer, Text, VStack } from "@expo/ui/swift-ui";
+import { accessibilityLabel, buttonStyle, controlSize, font, foregroundStyle, frame, listStyle, padding, progressViewStyle } from "@expo/ui/swift-ui/modifiers";
 import { planDay, type Area, type NowAction, type Task } from "@keystone/core";
 import { accent, NativeHost, secondary } from "../native-ui";
 import { CompletionMark, TaskRow, useCompletion } from "../native-task-row";
@@ -29,7 +29,7 @@ function NowRow({ task, onEdit }: { task: Task; onEdit: () => void }) {
           {`${task.minutes} min${goal ? ` · ${goal.title}` : ""}`}
         </Text>
         <Spacer />
-        <Menu label={<Image systemName="ellipsis.circle" size={23} color={accent} />} modifiers={[padding({ vertical: 5 })]}>
+        <Menu label={<Image systemName="ellipsis.circle" size={23} color={accent} />} modifiers={[accessibilityLabel("More actions"), padding({ vertical: 5 })]}>
           <Button label="Not now" systemImage="clock" onPress={() => answer("later")} />
           <Button label="Too big" systemImage="scissors" onPress={() => answer("tooBig")} />
           <Button label="Stuck" systemImage="questionmark.circle" onPress={() => answer("stuck")} />
@@ -52,6 +52,7 @@ export default function Today(): React.JSX.Element {
   const now = new Date();
   const focus = planDay(data.tasks, data.goals, now);
   const remaining = data.tasks.filter((t) => t.status !== "done");
+  const completed = data.tasks.length - remaining.length;
   const pending = remaining.filter((t) => t.checkBy);
   const [check] = pending;
   const overdue = remaining.filter((t) => t.dueDate && Date.parse(t.dueDate) < now.getTime());
@@ -110,6 +111,11 @@ export default function Today(): React.JSX.Element {
         ))}
         {unprocessed.length > 0 && <Section title="Saved for processing">
           {unprocessed.map((capture) => <Text key={capture.id}>{capture.text}</Text>)}
+        </Section>}
+        {data.tasks.length > 0 && <Section title="Progress">
+          <ProgressView value={completed / data.tasks.length} modifiers={[progressViewStyle("linear")]}>
+            <Text>{`${completed} of ${data.tasks.length} tasks complete`}</Text>
+          </ProgressView>
         </Section>}
       </List>
       {editing && <TaskEditorSheet key={taskEditorKey(editing)} task={editing} goals={data.goals} onSave={updateTask} onClose={() => setEditing(undefined)} />}

@@ -16,7 +16,7 @@ function confirm(): Promise<boolean> {
   );
 }
 
-export function RestoreButton({ onDone }: { onDone: (message: string) => void }): React.JSX.Element {
+export function useRestore(onDone: (message: string) => void) {
   const { restore } = useStore();
   async function pick(): Promise<void> {
     try {
@@ -31,5 +31,10 @@ export function RestoreButton({ onDone }: { onDone: (message: string) => void })
       onDone(e instanceof Error ? e.message : String(e));
     }
   }
+  return pick;
+}
+
+export function RestoreButton({ onDone }: { onDone: (message: string) => void }): React.JSX.Element {
+  const pick = useRestore(onDone);
   return <Button quiet title="Restore from a backup" onPress={() => void pick()} />;
 }

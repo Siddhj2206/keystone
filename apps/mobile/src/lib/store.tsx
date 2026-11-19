@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AppState, Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import { Area, Capture, Goal, Rules, Task, answer, classify, focusTasks, id, hasCaptureContent, matchTask, ruleWord } from "@keystone/core";
+import { Area, Capture, Goal, Rules, Task, NowAction, answer, classify, planDay, id, nowAction, hasCaptureContent, matchTask, ruleWord } from "@keystone/core";
 import { createStateQueue } from './state-queue';
 import { loadRows, saveRows } from "./db";
 import { parseBackup } from "./backup";
-import { acceptChecks, autoBackup, retryCaptures, sortCapture } from "./catch-up";
+import { acceptChecks, recoverMissed, autoBackup, retryCaptures, sortCapture } from "./catch-up";
 
 export interface Data {
   tasks: Task[];
@@ -35,6 +35,8 @@ interface Store {
   restore: (json: string) => Promise<void>;
   /** Resolves a Check stack item: keep the guess, or re-file it and remember the correction. */
   resolveCheck: (task: Task, area?: Area) => Promise<void>;
+  /** Applies a Now-card answer (Done, Not now, Too big, Stuck). */
+  act: (task: Task, action: NowAction) => Promise<void>;
   canUndo: boolean;
   undo: () => Promise<void>;
 }
@@ -66,6 +68,7 @@ export function StoreProvider({
       void retryCaptures(state, key);
       void autoBackup(state);
       void acceptChecks(state);
+      void recoverMissed(state);
     };
     catchUp();
     const sub = AppState.addEventListener("change", (s) => s === "active" && catchUp());
@@ -78,6 +81,9 @@ export function StoreProvider({
       rules: word ? { ...l.rules, [word]: area! } : l.rules,
       tasks: l.tasks.map((t) => (t.id === task.id ? { ...t, area: area ?? t.area, checkBy: undefined } : t)),
     }));
+  }
+  async function act(task: Task, action: NowAction): Promise<void> {
+    await state.update((l) => ({ ...l, tasks: nowAction(l.tasks, task, action) }));
   }
   function remember(): void {
     const { tasks, goals, captures } = state.get();
@@ -92,7 +98,7 @@ export function StoreProvider({
     const intent = classify(text);
     const latest = state.get();
     if (intent.kind === "question")
-      return answer(intent.topic, latest.tasks, latest.goals, focusTasks(latest.tasks));
+      return answer(intent.topic, latest.tasks, latest.goals, planDay(latest.tasks, latest.goals));
     if (intent.kind === "capture") return undefined;
     const task = matchTask(intent.query, latest.tasks);
     if (!task) return undefined;
@@ -163,7 +169,7 @@ export function StoreProvider({
   }
   return (
     <Context.Provider
-      value={{ data, ready, error, key, setKey, save, capture, updateTask, restore, resolveCheck, canUndo: !!undoTo, undo }}
+      value={{ data, ready, error, key, setKey, save, capture, updateTask, restore, resolveCheck, act, canUndo: !!undoTo, undo }}
     >
       {children}
     </Context.Provider>

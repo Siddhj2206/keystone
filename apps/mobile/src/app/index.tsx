@@ -1,16 +1,17 @@
 import React from "react";
 import { View } from "react-native";
 import { router } from "expo-router";
-import { focusTasks } from "@keystone/core";
+import { planDay } from "@keystone/core";
 import { useStore } from "../lib/store";
 import { Button, Card, Label, Page, usePalette } from "../lib/ui";
 import { TaskCard } from "../lib/task-card";
 import { CheckStack } from "../lib/check-stack";
+import { NowCard } from "../lib/now-card";
 export default function Today(): React.JSX.Element {
   const { data } = useStore();
   const c = usePalette();
   const now = new Date();
-  const focus = focusTasks(data.tasks);
+  const focus = planDay(data.tasks, data.goals, now);
   const done = data.tasks.filter((t) => t.status === "done").length;
   const remaining = data.tasks.filter((t) => t.status !== "done");
   const overdue = remaining.filter(
@@ -61,8 +62,9 @@ export default function Today(): React.JSX.Element {
           JUST {focus.length} THINGS
         </Label>
       </View>
-      {focus.map((t, i) => (
-        <TaskCard key={t.id} task={t} number={i + 1} />
+      {focus[0] && <NowCard task={focus[0]} />}
+      {focus.slice(1).map((t, i) => (
+        <TaskCard key={t.id} task={t} number={i + 2} />
       ))}
       {!focus.length && (
         <Card>

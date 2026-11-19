@@ -1,4 +1,4 @@
-import { Capture, autoAccept, organize, triage } from "@keystone/core";
+import { Capture, autoAccept, organize, recover, triage } from "@keystone/core";
 import type { createStateQueue } from "./state-queue";
 import type { Data } from "./store";
 import { backupDue, writeBackup } from "./backup";
@@ -53,4 +53,10 @@ export async function autoBackup(state: State, now = new Date()): Promise<void> 
 export async function acceptChecks(state: State, now = new Date()): Promise<void> {
   if (autoAccept(state.get().tasks, now) !== state.get().tasks)
     await state.update((l) => ({ ...l, tasks: autoAccept(l.tasks, now) }));
+}
+
+/** After missed days, spreads late work over the coming days instead of showing an overdue pile. */
+export async function recoverMissed(state: State, now = new Date()): Promise<void> {
+  if (recover(state.get().tasks, now) !== state.get().tasks)
+    await state.update((l) => ({ ...l, tasks: recover(l.tasks, now) }));
 }

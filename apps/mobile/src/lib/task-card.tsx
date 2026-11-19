@@ -4,6 +4,7 @@ import * as Haptics from "expo-haptics";
 import { Task, isISODateString } from "@keystone/core";
 import { useStore } from "./store";
 import { Button, Card, Input, Label, usePalette } from "./ui";
+import { localDateOf, deadlineForDate } from './task-dates';
 export function TaskCard({
   task,
   number,
@@ -17,7 +18,7 @@ export function TaskCard({
   const c = usePalette();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
-  const [date, setDate] = useState(isISODateString(task.dueDate) ? task.dueDate.slice(0, 10) : "");
+  const [date, setDate] = useState(localDateOf(task.dueDate));
   const [notes, setNotes] = useState(task.notes);
   const [error, setError] = useState("");
   const [celebrating, setCelebrating] = useState(false);
@@ -201,23 +202,18 @@ export function TaskCard({
             <Button
               title="Save details"
               onPress={() => {
-                if (
-                  !title.trim() ||
-                  (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) ||
-                  (date && !Number.isFinite(Date.parse(date)))
-                ) {
+                if (!title.trim()) {
                   setError("Use a title and a valid YYYY-MM-DD date.");
                   return;
                 }
-                commit({
+                try { commit({
                   ...task,
                   title: title.trim(),
                   notes,
-                  dueDate: date
-                    ? new Date(date + "T18:00:00").toISOString()
-                    : undefined,
+                  dueDate: deadlineForDate(task.dueDate,date),
                 });
                 setEditing(false);
+                } catch(e) { setError(String(e)); }
               }}
             />
           </View>

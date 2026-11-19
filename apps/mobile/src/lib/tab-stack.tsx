@@ -12,8 +12,6 @@ export function TabStack({ screen, title }: { screen: string; title: string }): 
       headerShadowVisible: false,
       ...(native && {
         headerTintColor: PlatformColor("systemIndigo"),
-        headerLargeStyle: { backgroundColor: PlatformColor("systemGroupedBackground") },
-        headerStyle: { backgroundColor: PlatformColor("systemGroupedBackground") },
         contentStyle: { backgroundColor: PlatformColor("systemGroupedBackground") },
       }),
     }}>

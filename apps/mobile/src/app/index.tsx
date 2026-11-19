@@ -116,7 +116,7 @@ export default function Today(): React.JSX.Element {
       {byArea.map(([area, tasks]) => (
         <React.Fragment key={area}>
           <Label style={{ fontWeight: "700", fontSize: 20 }}>
-            {area[0].toUpperCase() + area.slice(1)} · no goal yet
+            {area.charAt(0).toUpperCase() + area.slice(1) || "Other"} · no goal yet
           </Label>
           {tasks.map((t) => (
             <TaskCard key={t.id} task={t} editable />

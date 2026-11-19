@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import * as SQLite from "expo-sqlite";
 import * as SecureStore from "expo-secure-store";
 import { Capture, Goal, Task, id, organize } from "@keystone/core";
+import { createStateQueue } from './state-queue';
 
 interface Data {
   tasks: Task[];
@@ -36,6 +37,9 @@ export function StoreProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const [data, setData] = useState<Data>(empty);
+  const [state] = useState(() => createStateQueue(empty, async next => {
+    await (await db).runAsync('INSERT OR REPLACE INTO state (id,json) VALUES (1,?)', JSON.stringify(next));
+  }, setData));
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const [key, setKeyState] = useState("");
@@ -48,20 +52,14 @@ export function StoreProvider({
       const row = await connection.getFirstAsync<{ json: string }>(
         "SELECT json FROM state WHERE id=1",
       );
-      if (row) setData(JSON.parse(row.json));
+      if (row) await state.update(() => JSON.parse(row.json));
       if (Platform.OS !== "web")
         setKeyState((await SecureStore.getItemAsync("gemini-key")) || "");
       setReady(true);
     })().catch((e) => setError(String(e)));
-  }, []);
+  }, [state]);
   async function save(next: Data): Promise<void> {
-    await (
-      await db
-    ).runAsync(
-      "INSERT OR REPLACE INTO state (id,json) VALUES (1,?)",
-      JSON.stringify(next),
-    );
-    setData(next);
+    await state.update(() => next);
   }
   async function setKey(value: string): Promise<void> {
     if (Platform.OS === "web" && value)
@@ -84,24 +82,23 @@ export function StoreProvider({
       createdAt: new Date().toISOString(),
       processed: false,
     };
-    const pending = { ...data, captures: [...data.captures, item] };
-    await save(pending);
-    const plan = await organize(item, data.goals, key);
-    await save({
-      ...pending,
-      tasks: [...data.tasks, ...plan.tasks],
-      goals: [...data.goals, ...plan.goals],
-      captures: pending.captures.map((c) =>
+    await state.update(latest => ({ ...latest, captures: [...latest.captures, item] }));
+    const plan = await organize(item, state.get().goals, key);
+    await state.update(latest => ({
+      ...latest,
+      tasks: [...latest.tasks, ...plan.tasks],
+      goals: [...latest.goals, ...plan.goals],
+      captures: latest.captures.map((c) =>
         c.id === item.id ? { ...c, processed: true } : c,
       ),
-    });
+    }));
     return `${plan.tasks.length} tasks sorted · ${plan.engine === "local" ? "on your device" : "with Gemini"}`;
   }
   async function updateTask(task: Task): Promise<void> {
-    await save({
-      ...data,
-      tasks: data.tasks.map((t) => (t.id === task.id ? task : t)),
-    });
+    await state.update(latest => ({
+      ...latest,
+      tasks: latest.tasks.map((t) => (t.id === task.id ? task : t)),
+    }));
   }
   return (
     <Context.Provider

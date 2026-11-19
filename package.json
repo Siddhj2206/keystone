@@ -20,7 +20,8 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "testMatch": [
-      "**/packages/core/**/*.test.ts"
+      "**/packages/core/**/*.test.ts",
+      "**/apps/mobile/src/lib/**/*.test.ts"
     ]
   }
 }

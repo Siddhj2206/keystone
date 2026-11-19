@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { Area, Capture, Goal, Rules, Task, NowAction, answer, classify, planDay, id, nowAction, hasCaptureContent, matchTask, ruleWord, refileTask } from "@keystone/core";
@@ -43,6 +43,10 @@ interface Store {
   undo: () => Promise<void>;
 }
 const toRows = ({ tasks, goals, captures, ...prefs }: Data) => ({ tasks, goals, captures, prefs });
+type UndoAction = {
+  run: (latest: Data) => Data;
+  capture?: { id: string; createdGoals: Set<string> };
+};
 const Context = createContext<Store>(null!);
 export function StoreProvider({
   children,
@@ -55,7 +59,8 @@ export function StoreProvider({
   const [error, setError] = useState("");
   const [key, setKeyState] = useState("");
   // Reverses only the last command or capture, leaving later edits alone.
-  const [undoTo, setUndoTo] = useState<{ run: (l: Data) => Data }>();
+  const undoTo = useRef<UndoAction | undefined>(undefined);
+  const [canUndo, setCanUndo] = useState(false);
   useEffect(() => {
     (async () => {
       const rows = await loadRows();
@@ -68,7 +73,10 @@ export function StoreProvider({
   useEffect(() => {
     if (!ready) return;
     const catchUp = (): void => {
-      void retryCaptures(state, key);
+      void retryCaptures(state, key, (captureId) => {
+        const capture = undoTo.current?.capture;
+        return capture?.id === captureId ? capture.createdGoals : undefined;
+      });
       void autoBackup(state);
       void acceptChecks(state).then(() => recoverMissed(state));
     };
@@ -87,15 +95,17 @@ export function StoreProvider({
   async function act(task: Task, action: NowAction): Promise<void> {
     await state.update((l) => ({ ...l, tasks: nowAction(l.tasks, task, action) }));
     // Undo is offered for captures only; a Now answer makes the older Undo stale.
-    setUndoTo(undefined);
+    remember(undefined);
   }
-  function remember(run: (l: Data) => Data): void {
-    setUndoTo({ run });
+  function remember(action: UndoAction | undefined): void {
+    undoTo.current = action;
+    setCanUndo(!!action);
   }
   async function undo(): Promise<void> {
-    if (!undoTo) return;
-    await state.update(undoTo.run);
-    setUndoTo(undefined);
+    const action = undoTo.current;
+    if (!action) return;
+    await state.update(action.run);
+    if (undoTo.current === action) remember(undefined);
   }
   async function command(text: string): Promise<string | undefined> {
     const intent = classify(text);
@@ -116,7 +126,7 @@ export function StoreProvider({
       reverse=commandUndo(before,after,l.tasks.indexOf(before));
       return {...l,tasks:after?l.tasks.map(t=>t.id===before.id?after:t):l.tasks.filter(t=>t.id!==before.id)};
     });
-    if(reverse) remember(reverse);
+    if(reverse) remember({ run: reverse });
     return `${intent.kind === "done" ? "Marked done" : intent.kind === "drop" ? "Dropped" : "Moved to tomorrow"}: ${task.title}`;
   }
   async function restore(json: string): Promise<void> {
@@ -155,11 +165,13 @@ export function StoreProvider({
     };
     await state.update(latest => ({ ...latest, captures: [...latest.captures, item] }));
     const createdGoals = new Set<string>();
-    remember((l) => undoCapture(l,item.id,createdGoals));
+    remember({
+      run: (latest) => undoCapture(latest, item.id, createdGoals),
+      capture: { id: item.id, createdGoals },
+    });
     let plan;
     try {
-      plan = await sortCapture(state, item, key);
-      plan.goals.forEach(g=>createdGoals.add(g.id));
+      plan = await sortCapture(state, item, key, createdGoals);
     } catch {
       return "Saved. Keystone will sort it next time you open the app.";
     }
@@ -174,7 +186,7 @@ export function StoreProvider({
   }
   return (
     <Context.Provider
-      value={{ data, ready, error, key, setKey, save, saveReminderPreferences, capture, updateTask, restore, resolveCheck, act, canUndo: !!undoTo, undo }}
+      value={{ data, ready, error, key, setKey, save, saveReminderPreferences, capture, updateTask, restore, resolveCheck, act, canUndo, undo }}
     >
       {children}
     </Context.Provider>

@@ -7,21 +7,22 @@ type State = ReturnType<typeof createStateQueue<Data>>;
 
 /** Sorts a saved capture into tasks and goals and marks it processed. */
 const sorting = new Set<string>();
-export async function sortCapture(state: State, item: Capture, key: string) {
+export async function sortCapture(state: State, item: Capture, key: string, createdGoals?: Set<string>) {
   sorting.add(item.id);
   try {
     const raw = await organize(item, state.get().goals, key);
     const plan = { ...raw, tasks: triage(raw.tasks, state.get().rules) };
-    await state.update((latest) =>
-      latest.captures.some((c) => c.id === item.id && !c.processed)
-        ? {
-            ...latest,
-            tasks: [...latest.tasks, ...plan.tasks],
-            goals: [...latest.goals, ...plan.goals],
-            captures: latest.captures.map((c) => (c.id === item.id ? { ...c, processed: true } : c)),
-          }
-        : latest,
-    );
+    await state.update((latest) => {
+      if (!latest.captures.some((c) => c.id === item.id && !c.processed)) return latest;
+      // Record ownership before a queued Undo can run.
+      plan.goals.forEach((goal) => createdGoals?.add(goal.id));
+      return {
+        ...latest,
+        tasks: [...latest.tasks, ...plan.tasks],
+        goals: [...latest.goals, ...plan.goals],
+        captures: latest.captures.map((c) => (c.id === item.id ? { ...c, processed: true } : c)),
+      };
+    });
     return plan;
   } finally {
     sorting.delete(item.id);
@@ -30,12 +31,12 @@ export async function sortCapture(state: State, item: Capture, key: string) {
 
 let retrying = false;
 /** Re-sorts captures that were saved but never organized (app closed or sort failed). */
-export async function retryCaptures(state: State, key: string): Promise<void> {
+export async function retryCaptures(state: State, key: string, trackedGoals?: (captureId: string) => Set<string> | undefined): Promise<void> {
   if (retrying) return;
   retrying = true;
   try {
     for (const item of state.get().captures.filter((c) => !c.processed && !sorting.has(c.id)))
-      await sortCapture(state, item, key).catch(() => {});
+      await sortCapture(state, item, key, trackedGoals?.(item.id)).catch(() => {});
   } finally {
     retrying = false;
   }

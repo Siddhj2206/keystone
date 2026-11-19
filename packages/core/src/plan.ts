@@ -24,7 +24,7 @@ export function planDay(tasks: Task[], goals: Goal[], now = new Date()): Task[] 
 
 /** Tasks whose deadline passed more than a day ago: shown as a fresh start, not a wall. */
 export function missed(tasks: Task[], now = new Date()): Task[] {
-  return tasks.filter((t) => t.status !== "done" && t.dueDate && due(t) < now.getTime() - DAY);
+  return tasks.filter((t) => t.status !== "done" && !t.checkBy && t.dueDate && due(t) < now.getTime() - DAY);
 }
 
 /** Spreads missed work two per day starting today, so the plan never shows a backlog all at once. */
@@ -35,8 +35,8 @@ export function recover(tasks: Task[], now = new Date()): Task[] {
     late.map((t, i) => {
       const d = new Date(now);
       d.setDate(d.getDate() + Math.floor(i / 2));
-      d.setHours(9, 0, 0, 0);
-      // Two come back today, so a late return never hides everything again.
+      d.setHours(i < 2 ? 21 : 9, 0, 0, 0);
+      // Two come back today (due tonight), so a late return never hides everything again.
       return [t.id, { ...t, status: i < 2 ? ("todo" as const) : ("snoozed" as const), dueDate: d.toISOString(), notes: t.notes || "Carried over" }];
     }),
   );

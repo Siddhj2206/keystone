@@ -22,6 +22,7 @@ test("recovery spreads missed work over the next days", () => {
   expect(missed(out, now)).toHaveLength(0);
   expect(out.map((t) => t.dueDate!.slice(0, 10))).toEqual(["2026-11-19", "2026-11-19", "2026-11-20"].map((d) => d));
   expect(planDay(out, [], now)).toHaveLength(2);
+  expect(out.filter((t) => Date.parse(t.dueDate!) < now.getTime())).toHaveLength(0);
   expect(recover(out, now)).toBe(out);
   const fine = [task("ok")];
   expect(recover(fine, now)).toBe(fine);
@@ -34,4 +35,10 @@ test("Now card answers", () => {
   expect(big[0].title).toBe("First 10 minutes: Write report");
   expect(big).toHaveLength(2);
   expect(nowAction([t], t, "stuck", now)[0].title).toMatch(/blocking/);
+});
+
+test("tasks waiting in Check don't take recovery slots", () => {
+  const out = recover([task("chk", { dueDate: "2026-11-15T10:00:00Z", checkBy: "2026-11-20T00:00:00Z" }), task("a", { dueDate: "2026-11-15T10:00:00Z" })], now);
+  expect(out[0].dueDate).toBe("2026-11-15T10:00:00Z");
+  expect(out[1].status).toBe("todo");
 });

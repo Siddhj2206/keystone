@@ -20,8 +20,9 @@ test("recovery spreads missed work over the next days", () => {
   const late = ["a", "b", "c"].map((t) => task(t, { dueDate: "2026-11-15T10:00:00Z" }));
   const out = recover(late, now);
   expect(missed(out, now)).toHaveLength(0);
-  expect(out.map((t) => t.dueDate!.slice(0, 10))).toEqual(["2026-11-20", "2026-11-20", "2026-11-21"].map((d) => d));
-  expect(planDay(out, [], now)).toHaveLength(0);
+  expect(out.map((t) => t.dueDate!.slice(0, 10))).toEqual(["2026-11-19", "2026-11-19", "2026-11-20"].map((d) => d));
+  expect(planDay(out, [], now)).toHaveLength(2);
+  expect(recover(out, now)).toBe(out);
   const fine = [task("ok")];
   expect(recover(fine, now)).toBe(fine);
 });

@@ -84,13 +84,9 @@ export function StoreProvider({
     }));
   }
   async function act(task: Task, action: NowAction): Promise<void> {
-    const before = new Set(state.get().tasks.map((t) => t.id));
     await state.update((l) => ({ ...l, tasks: nowAction(l.tasks, task, action) }));
-    const added = new Set(state.get().tasks.filter((t) => !before.has(t.id)).map((t) => t.id));
-    remember((l) => ({
-      ...l,
-      tasks: l.tasks.filter((t) => !added.has(t.id)).map((t) => (t.id === task.id ? task : t)),
-    }));
+    // Undo is offered for captures only; a Now answer makes the older Undo stale.
+    setUndoTo(undefined);
   }
   function remember(run: (l: Data) => Data): void {
     setUndoTo({ run });

@@ -177,7 +177,8 @@ export function StoreProvider({
   async function updateTask(task: Task): Promise<void> {
     await state.update(latest => ({
       ...latest,
-      tasks: latest.tasks.map((t) => (t.id === task.id ? task : t)),
+      // Linking a goal settles the area, so the task leaves Check.
+      tasks: latest.tasks.map((t) => (t.id === task.id ? (task.goalId ? { ...task, checkBy: undefined } : task) : t)),
     }));
   }
   return (

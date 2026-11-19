@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Goal, id } from "@keystone/core";
-import { useStore } from "../lib/store";
-import { Button, Card, Input, Label, Page, usePalette } from "../lib/ui";
-import { TaskCard } from "../lib/task-card";
+import { useStore } from "../store";
+import { Button, Card, Input, Label, Page, usePalette } from "../ui";
+import { TaskCard } from "../task-card";
 export default function Goals(): React.JSX.Element {
   const { data, save } = useStore();
   const c = usePalette();
@@ -134,7 +134,7 @@ export default function Goals(): React.JSX.Element {
             placeholder="Target YYYY-MM-DD (optional)"
             value={editing.targetDate || ""}
             onChangeText={(targetDate) =>
-              setEditing({ ...editing, targetDate })
+              setEditing({ ...editing, targetDate: targetDate || undefined })
             }
           />
           <Button

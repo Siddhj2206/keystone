@@ -22,10 +22,10 @@ export function TabNavigation(): React.JSX.Element {
     >
       {(
         [
-          { name: "index", title: "Today", icon: "sunny-outline" },
-          { name: "capture", title: "Capture", icon: "add-circle-outline" },
-          { name: "goals", title: "Goals", icon: "planet-outline" },
-          { name: "settings", title: "Settings", icon: "options-outline" },
+          { name: "(today)", title: "Today", icon: "sunny-outline" },
+          { name: "(capture)", title: "Capture", icon: "add-circle-outline" },
+          { name: "(goals)", title: "Goals", icon: "planet-outline" },
+          { name: "(settings)", title: "Settings", icon: "options-outline" },
         ] as const
       ).map(({ name, title, icon }) => (
         <Tabs.Screen

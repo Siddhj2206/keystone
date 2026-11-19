@@ -1,15 +1,17 @@
 import React from "react";
 import { View } from "react-native";
 import { router } from "expo-router";
-import { focusTasks } from "@keystone/core";
-import { useStore } from "../lib/store";
-import { Button, Card, Label, Page, usePalette } from "../lib/ui";
-import { TaskCard } from "../lib/task-card";
+import { planDay } from "@keystone/core";
+import { useStore } from "../store";
+import { Button, Card, Label, Page, usePalette } from "../ui";
+import { TaskCard } from "../task-card";
+import { CheckStack } from "../check-stack";
+import { NowCard } from "../now-card";
 export default function Today(): React.JSX.Element {
   const { data } = useStore();
   const c = usePalette();
   const now = new Date();
-  const focus = focusTasks(data.tasks);
+  const focus = planDay(data.tasks, data.goals, now);
   const done = data.tasks.filter((t) => t.status === "done").length;
   const remaining = data.tasks.filter((t) => t.status !== "done");
   const overdue = remaining.filter(
@@ -21,7 +23,12 @@ export default function Today(): React.JSX.Element {
       Date.parse(t.dueDate) >= now.getTime() &&
       Date.parse(t.dueDate) < now.getTime() + 7 * 86400000,
   );
-  const inbox = remaining.filter((t) => !t.goalId);
+  const noGoal = remaining.filter((t) => !t.goalId);
+  // Tasks still in Check stay editable here until their area is confirmed.
+  const inbox = noGoal.filter((t) => t.area === "other" || t.checkBy);
+  const byArea = [...new Set(noGoal.filter((t) => !t.checkBy).map((t) => t.area))]
+    .filter((a) => a !== "other")
+    .map((a) => [a, noGoal.filter((t) => t.area === a)] as const);
   return (
     <Page
       eyebrow={now.toLocaleDateString(undefined, {
@@ -53,14 +60,16 @@ export default function Today(): React.JSX.Element {
           Every small step counts. A fresh start is always here.
         </Label>
       </Card>
+      <CheckStack />
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         <Label style={{ fontWeight: "700", fontSize: 20 }}>Today’s focus</Label>
         <Label style={{ fontSize: 12, color: c.muted }}>
           JUST {focus.length} THINGS
         </Label>
       </View>
-      {focus.map((t, i) => (
-        <TaskCard key={t.id} task={t} number={i + 1} />
+      {focus[0] && <NowCard task={focus[0]} />}
+      {focus.slice(1).map((t, i) => (
+        <TaskCard key={t.id} task={t} number={i + 2} />
       ))}
       {!focus.length && (
         <Card>
@@ -107,6 +116,16 @@ export default function Today(): React.JSX.Element {
           ))}
         </>
       )}
+      {byArea.map(([area, tasks]) => (
+        <React.Fragment key={area}>
+          <Label style={{ fontWeight: "700", fontSize: 20 }}>
+            {area.charAt(0).toUpperCase() + area.slice(1) || "Other"} · no goal yet
+          </Label>
+          {tasks.map((t) => (
+            <TaskCard key={t.id} task={t} editable />
+          ))}
+        </React.Fragment>
+      ))}
       {data.captures
         .filter((x) => !x.processed)
         .map((x) => (

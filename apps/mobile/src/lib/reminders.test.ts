@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { scheduleReminders } from './reminders';
+import { planDay,Task } from '@keystone/core';
 jest.mock('react-native',()=>({Platform:{OS:'ios'}}));
 jest.mock('expo-notifications',()=>({getPermissionsAsync:jest.fn(),requestPermissionsAsync:jest.fn(),cancelAllScheduledNotificationsAsync:jest.fn(),scheduleNotificationAsync:jest.fn(),SchedulableTriggerInputTypes:{DAILY:'daily',DATE:'date'}}));
 beforeEach(()=>{jest.clearAllMocks();(Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({granted:true});(Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValue({granted:true});});
@@ -20,4 +21,10 @@ test('task reminders use the task id and completed tasks are excluded',async()=>
  const task={id:'t',title:'Read',notes:'',area:'skills' as const,priority:2,minutes:20,captureId:'c',status:'todo' as const,dueDate:new Date(Date.now()+86400000).toISOString()};
  await scheduleReminders([task,{...task,id:'done',status:'done'}],'09:00',false);
  expect((Notifications.scheduleNotificationAsync as jest.Mock).mock.calls.map(([r])=>r.identifier)).toEqual(['keystone-morning','keystone-task-t']);
+});
+test.each([true,false])('morning count matches Today when all/some tasks await Check: %s',async allCheck=>{
+ const tasks:Task[]=[{id:'check',title:'Unclear',notes:'',area:'other',priority:3,minutes:20,captureId:'c',status:'todo',checkBy:new Date(Date.now()+86400000).toISOString()}];
+ if(!allCheck)tasks.push({...tasks[0],id:'ready',checkBy:undefined});
+ await scheduleReminders(tasks,'09:00',false);
+ const morning=(Notifications.scheduleNotificationAsync as jest.Mock).mock.calls.find(([r])=>r.identifier==='keystone-morning')![0];expect(morning.content.body).toBe(`${planDay(tasks,[]).length} focus picks are waiting. Start with just one.`);expect(planDay(tasks,[])).toHaveLength(allCheck?0:1);
 });

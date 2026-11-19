@@ -1,80 +1,13 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import { hasCaptureContent } from '@keystone/core';
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
-import { Glass } from "../lib/glass";
-import { Platform, Pressable, View } from "react-native";
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from "expo-speech-recognition";
-import { useStore } from "../lib/store";
-import { Button, Card, Input, Label, Page, usePalette } from "../lib/ui";
+import { Glass } from "../glass";
+import { Pressable, View } from "react-native";
+import { useCapture } from "../use-capture";
+import { Button, Card, Input, Label, Page, usePalette } from "../ui";
 export default function Capture(): React.JSX.Element {
-  const { capture } = useStore();
+  const { text, setText, listening, busy, message, canUndo, mic, submit, revert } = useCapture();
   const c = usePalette();
-  const [text, setText] = useState("");
-  const [listening, setListening] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const voice = useRef(false);
-  const prefix = useRef("");
-  useSpeechRecognitionEvent("start", () => setListening(true));
-  useSpeechRecognitionEvent("end", () => setListening(false));
-  useSpeechRecognitionEvent("result", (e) => {
-    voice.current = true;
-    setText(prefix.current + (e.results[0]?.transcript || ""));
-  });
-  useSpeechRecognitionEvent("error", (e) => {
-    setMessage(`Voice unavailable: ${e.message}. You can always type below.`);
-    setListening(false);
-  });
-  async function mic(): Promise<void> {
-    try {
-      if (listening) {
-        ExpoSpeechRecognitionModule.stop();
-        return;
-      }
-      if (Platform.OS === "web") {
-        setMessage(
-          "Voice capture is available in the installed iOS app. Type a thought here.",
-        );
-        return;
-      }
-      const p = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      if (!p.granted) {
-        setMessage(
-          "Microphone permission is off. Enable it in iPhone Settings, or type below.",
-        );
-        return;
-      }
-      prefix.current = text ? text + "\n" : "";
-      ExpoSpeechRecognitionModule.start({
-        lang: "en-US",
-        interimResults: true,
-        requiresOnDeviceRecognition:
-          ExpoSpeechRecognitionModule.supportsOnDeviceRecognition(),
-      });
-    } catch {
-      setMessage("Could not start voice capture. Try typing instead.");
-    }
-  }
-  async function submit(): Promise<void> {
-    setBusy(true);
-    try {
-      const result = await capture(text, voice.current ? "voice" : "text");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
-      setText("");
-      voice.current = false;
-      setMessage(result);
-    } catch (e) {
-      setMessage(String(e));
-    } finally {
-      setBusy(false);
-    }
-  }
   return (
     <Page
       eyebrow="Make a little space"
@@ -139,6 +72,13 @@ export default function Capture(): React.JSX.Element {
       {!!message && (
         <Card>
           <Label accessibilityLiveRegion="polite">{message}</Label>
+          {canUndo && (
+            <Button
+              quiet
+              title="Undo"
+              onPress={() => void revert()}
+            />
+          )}
         </Card>
       )}
       <Card>

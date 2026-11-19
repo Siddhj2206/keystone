@@ -11,3 +11,8 @@ export function deadlineForDate(original: unknown, date: string): string | undef
   if (date === localDateOf(original) && isISODateString(original)) return original;
   return new Date(`${date}T18:00:00`).toISOString();
 }
+export function withDueTime(date: string, time?: Date): string {
+  const combined = new Date(`${date}T18:00:00`);
+  if (time) combined.setHours(time.getHours(), time.getMinutes(), 0, 0);
+  return combined.toISOString();
+}

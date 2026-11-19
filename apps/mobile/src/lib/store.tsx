@@ -6,7 +6,7 @@ import { createStateQueue } from './state-queue';
 import { loadRows, saveRows } from "./db";
 import { parseBackup } from "./backup";
 import { acceptChecks, recoverMissed, autoBackup, retryCaptures, sortCapture } from "./catch-up";
-import { undoCapture } from './undo';
+import { undoCapture, commandUndo } from './undo';
 
 export interface Data {
   tasks: Task[];
@@ -105,29 +105,18 @@ export function StoreProvider({
     if (intent.kind === "capture") return undefined;
     const task = matchTask(intent.query, latest.tasks);
     if (!task) return undefined;
-    const at = latest.tasks.indexOf(task);
-    remember((l) => ({
-      ...l,
-      tasks: l.tasks.some((t) => t.id === task.id)
-        ? l.tasks.map((t) => (t.id === task.id ? task : t))
-        : [...l.tasks.slice(0, at), task, ...l.tasks.slice(at)],
-    }));
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(9, 0, 0, 0);
-    await state.update((l) => ({
-      ...l,
-      tasks:
-        intent.kind === "drop"
-          ? l.tasks.filter((t) => t.id !== task.id)
-          : l.tasks.map((t) =>
-              t.id !== task.id
-                ? t
-                : intent.kind === "done"
-                  ? { ...t, status: "done", completedAt: new Date().toISOString() }
-                  : { ...t, status: "snoozed", dueDate: tomorrow.toISOString() },
-            ),
-    }));
+    let reverse:((l:Data)=>Data)|undefined;
+    await state.update((l) => {
+      const before=l.tasks.find(t=>t.id===task.id);
+      if(!before) return l;
+      const after:Task|undefined=intent.kind==='drop'?undefined:intent.kind==='done'?{...before,status:'done',completedAt:new Date().toISOString()}:{...before,status:'snoozed',dueDate:tomorrow.toISOString()};
+      reverse=commandUndo(before,after,l.tasks.indexOf(before));
+      return {...l,tasks:after?l.tasks.map(t=>t.id===before.id?after:t):l.tasks.filter(t=>t.id!==before.id)};
+    });
+    if(reverse) remember(reverse);
     return `${intent.kind === "done" ? "Marked done" : intent.kind === "drop" ? "Dropped" : "Moved to tomorrow"}: ${task.title}`;
   }
   async function restore(json: string): Promise<void> {

@@ -11,7 +11,7 @@ test('concurrent writes use the latest persisted state and empty updates work', 
  expect(state.get()).toBe(2);expect(writes).toEqual([1,2,2]);
 });
 test('a failed write does not publish or poison the queue', async () => {
- const publish=jest.fn();let fail=true;const state=createStateQueue(0,async()=>{if(fail)throw Error('disk');},publish);
+ const publish=jest.fn();let fail=true;const state=createStateQueue<number>(0,async()=>{if(fail)throw Error('disk');},publish);
  await expect(state.update(n=>n+1)).rejects.toThrow('disk');expect(publish).not.toHaveBeenCalled();fail=false;
  await state.update(n=>n+1);expect(state.get()).toBe(1);
 });

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Animated, Pressable, View, AccessibilityInfo } from "react-native";
 import * as Haptics from "expo-haptics";
-import { Task } from "@keystone/core";
+import { Task, isISODateString } from "@keystone/core";
 import { useStore } from "./store";
 import { Button, Card, Input, Label, usePalette } from "./ui";
 export function TaskCard({
@@ -17,7 +17,7 @@ export function TaskCard({
   const c = usePalette();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
-  const [date, setDate] = useState(task.dueDate?.slice(0, 10) || "");
+  const [date, setDate] = useState(isISODateString(task.dueDate) ? task.dueDate.slice(0, 10) : "");
   const [notes, setNotes] = useState(task.notes);
   const [error, setError] = useState("");
   const [celebrating, setCelebrating] = useState(false);
@@ -121,7 +121,7 @@ export function TaskCard({
               {task.priority === 3 ? "· HIGH PRIORITY" : ""}
             </Label>
             <Label style={{ fontSize: 12, color: c.muted }}>
-              {task.dueDate
+              {isISODateString(task.dueDate)
                 ? new Date(task.dueDate).toLocaleString(undefined, {
                     month: "short",
                     day: "numeric",

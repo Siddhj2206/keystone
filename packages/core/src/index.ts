@@ -35,6 +35,14 @@ export interface Plan {
 }
 export const id = (): string =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+export function isISODateString(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const parts = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/);
+  if (!parts) return false;
+  const [,year,month,day,hour='0',minute='0',second='0'] = parts;
+  const lastDay = new Date(Date.UTC(+year,+month,0)).getUTCDate();
+  return +month>=1 && +month<=12 && +day>=1 && +day<=lastDay && +hour<24 && +minute<60 && +second<60 && Number.isFinite(Date.parse(value));
+}
 export function areaOf(text: string): Area {
   if (/exam|assignment|lab|lecture|study|homework/i.test(text))
     return "academics";
@@ -202,9 +210,13 @@ export async function organize(
       for (const g of plan.goals)
         if (
           typeof g.id !== "string" ||
+          !g.id.trim() ||
           typeof g.title !== "string" ||
+          !g.title.trim() ||
           !areas.includes(g.area) ||
-          !["short", "long"].includes(g.horizon)
+          !["short", "long"].includes(g.horizon) ||
+          (g.notes !== undefined && typeof g.notes !== 'string') ||
+          (g.targetDate !== undefined && !isISODateString(g.targetDate))
         )
           throw Error("Invalid goal");
       for (const t of plan.tasks)
@@ -215,18 +227,24 @@ export async function organize(
           ![1, 2, 3].includes(t.priority) ||
           !Number.isFinite(t.minutes) ||
           t.minutes <= 0 ||
-          (t.dueDate && !Number.isFinite(Date.parse(t.dueDate))) ||
-          (t.goalId &&
-            ![...existing, ...plan.goals].some((g) => g.id === t.goalId))
+          (t.notes !== undefined && typeof t.notes !== 'string') ||
+          (t.dueDate !== undefined && !isISODateString(t.dueDate)) ||
+          (t.goalId !== undefined &&
+            (typeof t.goalId !== 'string' || !t.goalId.trim() || ![...existing, ...plan.goals].some((g) => g.id === t.goalId)))
         )
           throw Error("Invalid task");
       return {
         engine: "gemini",
-        goals: plan.goals,
+        goals: plan.goals.map((g: Goal) => ({id:g.id,title:g.title.trim(),area:g.area,horizon:g.horizon,notes:g.notes || '',targetDate:g.targetDate})),
         tasks: plan.tasks.map((t: Task) => ({
-          ...t,
+          title:t.title.trim(),
+          area:t.area,
+          priority:t.priority,
+          minutes:t.minutes,
+          goalId:t.goalId,
+          dueDate:t.dueDate,
           id: id(),
-          notes: "",
+          notes: t.notes || "",
           status: "todo",
           captureId: capture.id,
         })),

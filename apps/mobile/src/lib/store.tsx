@@ -6,6 +6,7 @@ import { createStateQueue } from './state-queue';
 import { loadRows, saveRows } from "./db";
 import { parseBackup } from "./backup";
 import { acceptChecks, recoverMissed, autoBackup, retryCaptures, sortCapture } from "./catch-up";
+import { undoCapture } from './undo';
 
 export interface Data {
   tasks: Task[];
@@ -164,16 +165,12 @@ export function StoreProvider({
       processed: false,
     };
     await state.update(latest => ({ ...latest, captures: [...latest.captures, item] }));
-    const goalsBefore = new Set(state.get().goals.map((g) => g.id));
-    remember((l) => ({
-      ...l,
-      captures: l.captures.filter((c) => c.id !== item.id),
-      tasks: l.tasks.filter((t) => t.captureId !== item.id),
-      goals: l.goals.filter((g) => goalsBefore.has(g.id) || l.tasks.some((t) => t.goalId === g.id && t.captureId !== item.id)),
-    }));
+    const createdGoals = new Set<string>();
+    remember((l) => undoCapture(l,item.id,createdGoals));
     let plan;
     try {
       plan = await sortCapture(state, item, key);
+      plan.goals.forEach(g=>createdGoals.add(g.id));
     } catch {
       return "Saved. Keystone will sort it next time you open the app.";
     }

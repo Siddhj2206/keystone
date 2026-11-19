@@ -7,6 +7,7 @@ import * as Sharing from "expo-sharing";
 import { useStore } from "../lib/store";
 import { Button, Card, Input, Label, Page } from "../lib/ui";
 import { scheduleReminders } from "../lib/reminders";
+import { RestoreButton } from "../lib/restore-button";
 export default function Settings(): React.JSX.Element {
   const { data, save, key, setKey } = useStore();
   const [draft, setDraft] = useState(key);
@@ -137,13 +138,15 @@ export default function Settings(): React.JSX.Element {
         </Label>
         <Label>
           Export goals, tasks, captures and preferences as JSON. Your API key is
-          never included.
+          never included. On iPhone, Keystone also saves a weekly backup to
+          Files › On My iPhone › Keystone.
         </Label>
         <Button
           quiet
           title="Export all data  ↗"
           onPress={() => void exportData()}
         />
+        <RestoreButton onDone={setMessage} />
       </Card>
       {!!message && (
         <Card>

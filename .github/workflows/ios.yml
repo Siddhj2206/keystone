@@ -1,0 +1,67 @@
+name: iOS · unsigned IPA
+on:
+  push:
+    branches: [main, "devin/**"]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-26
+    permissions:
+      contents: write
+    env:
+      CI: "1"
+      EXPO_NO_TELEMETRY: "1"
+    steps:
+      - name: Select Xcode 26
+        run: |
+          XCODE_APP=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
+          test -n "$XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          xcodebuild -version | grep -E 'Xcode 26\.'
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx jest --runInBand
+      - name: Generate native project
+        working-directory: apps/mobile
+        run: npx expo prebuild -p ios --no-install
+      - name: Install pods
+        working-directory: apps/mobile/ios
+        run: pod install
+      - name: Build for a real iPhone, without signing
+        working-directory: apps/mobile
+        run: |
+          set -o pipefail
+          xcodebuild -workspace ios/Keystone.xcworkspace -scheme Keystone -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build | tee xcodebuild.log
+      - name: Package unsigned IPA
+        working-directory: apps/mobile
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/Keystone.app Payload/
+          /usr/bin/zip -r -y keystone.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keystone-ipa
+          path: apps/mobile/keystone.ipa
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: xcodebuild-log
+          path: apps/mobile/xcodebuild.log
+      - name: Publish latest main build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view latest --repo "$GITHUB_REPOSITORY" || gh release create latest --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title 'Keystone · latest iOS build' --notes 'Unsigned IPA for external signing services. See README for installation limitations.'
+          gh release upload latest apps/mobile/keystone.ipa --clobber --repo "$GITHUB_REPOSITORY"

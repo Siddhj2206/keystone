@@ -5,8 +5,12 @@ function respond(tasks:unknown[],goals:unknown[]=[]):void { global.fetch=jest.fn
 test.each([0,null,false,'','Friday','2026-02-30','2026-01-01T25:00:00Z',{},[]])('rejects invalid dueDate %j',async dueDate=>{
  respond([{...task,dueDate}]);expect((await organize(capture,[],'key')).engine).toBe('local');
 });
-test.each(['2026-11-20','2026-11-20T16:00:00Z','2026-11-20T16:30:00.123+05:30'])('accepts valid ISO date %s',async dueDate=>{
- respond([{...task,dueDate}]);expect((await organize(capture,[],'key')).tasks[0].dueDate).toBe(dueDate);expect(isISODateString(dueDate)).toBe(true);
+test.each(['2026-11-20','2026-11-20T16:00:00','2026-11-20T16:00:00Z','2026-11-20T16:30:00.123+05:30'])('accepts and normalizes valid ISO date %s',async dueDate=>{
+ respond([{...task,dueDate}]);expect((await organize(capture,[],'key')).tasks[0].dueDate).toBe(dueDate.length===10?dueDate:new Date(dueDate).toISOString());expect(isISODateString(dueDate)).toBe(true);
+});
+test('normalizes timezone-free goal target timestamps as local time',async()=>{
+ const targetDate='2026-11-20T16:00:00';respond([task],[{id:'g',title:'Life',area:'life',horizon:'short',notes:'',targetDate}]);
+ expect((await organize(capture,[],'key')).goals[0].targetDate).toBe(new Date(2026,10,20,16).toISOString());
 });
 test.each([{notes:0},{goalId:0},{goalId:null},{goalId:'missing'},{priority:0},{minutes:-1}])('rejects invalid task fields %j',async fields=>{
  respond([{...task,...fields}]);expect((await organize(capture,[],'key')).engine).toBe('local');

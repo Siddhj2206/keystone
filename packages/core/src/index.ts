@@ -38,11 +38,14 @@ export const id = (): string =>
 export const hasCaptureContent = (text: string): boolean => /[\p{L}\p{N}]/u.test(text);
 export function isISODateString(value: unknown): value is string {
   if (typeof value !== 'string') return false;
-  const parts = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/);
+  const parts = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?)?$/);
   if (!parts) return false;
   const [,year,month,day,hour='0',minute='0',second='0'] = parts;
   const lastDay = new Date(Date.UTC(+year,+month,0)).getUTCDate();
   return +month>=1 && +month<=12 && +day>=1 && +day<=lastDay && +hour<24 && +minute<60 && +second<60 && Number.isFinite(Date.parse(value));
+}
+function normalizedDate(value: string | undefined): string | undefined {
+  return value && value.length > 10 ? new Date(value).toISOString() : value;
 }
 export function areaOf(text: string): Area {
   if (/exam|assignment|lab|lecture|study|homework/i.test(text))
@@ -245,14 +248,14 @@ export async function organize(
       }
       return {
         engine: "gemini",
-        goals: plan.goals.map((g: Goal) => ({id:goalIds.get(g.id)!,title:g.title.trim(),area:g.area,horizon:g.horizon,notes:g.notes || '',targetDate:g.targetDate})),
+        goals: plan.goals.map((g: Goal) => ({id:goalIds.get(g.id)!,title:g.title.trim(),area:g.area,horizon:g.horizon,notes:g.notes || '',targetDate:normalizedDate(g.targetDate)})),
         tasks: plan.tasks.map((t: Task) => ({
           title:t.title.trim(),
           area:t.area,
           priority:t.priority,
           minutes:t.minutes,
           goalId:t.goalId ? goalIds.get(t.goalId) || t.goalId : undefined,
-          dueDate:t.dueDate,
+          dueDate:normalizedDate(t.dueDate),
           id: id(),
           notes: t.notes || "",
           status: "todo",

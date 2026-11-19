@@ -5,6 +5,7 @@ import { focusTasks } from "@keystone/core";
 import { useStore } from "../lib/store";
 import { Button, Card, Label, Page, usePalette } from "../lib/ui";
 import { TaskCard } from "../lib/task-card";
+import { CheckStack } from "../lib/check-stack";
 export default function Today(): React.JSX.Element {
   const { data } = useStore();
   const c = usePalette();
@@ -53,6 +54,7 @@ export default function Today(): React.JSX.Element {
           Every small step counts. A fresh start is always here.
         </Label>
       </Card>
+      <CheckStack />
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         <Label style={{ fontWeight: "700", fontSize: 20 }}>Today’s focus</Label>
         <Label style={{ fontSize: 12, color: c.muted }}>

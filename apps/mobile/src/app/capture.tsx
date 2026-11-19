@@ -11,7 +11,7 @@ import {
 import { useStore } from "../lib/store";
 import { Button, Card, Input, Label, Page, usePalette } from "../lib/ui";
 export default function Capture(): React.JSX.Element {
-  const { capture } = useStore();
+  const { capture, canUndo, undo } = useStore();
   const c = usePalette();
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
@@ -139,6 +139,13 @@ export default function Capture(): React.JSX.Element {
       {!!message && (
         <Card>
           <Label accessibilityLiveRegion="polite">{message}</Label>
+          {canUndo && (
+            <Button
+              quiet
+              title="Undo"
+              onPress={() => void undo().then(() => setMessage("Undone."))}
+            />
+          )}
         </Card>
       )}
       <Card>

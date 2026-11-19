@@ -1,4 +1,4 @@
-import { Capture, organize } from "@keystone/core";
+import { Capture, autoAccept, organize, triage } from "@keystone/core";
 import type { createStateQueue } from "./state-queue";
 import type { Data } from "./store";
 import { backupDue, writeBackup } from "./backup";
@@ -10,7 +10,8 @@ const sorting = new Set<string>();
 export async function sortCapture(state: State, item: Capture, key: string) {
   sorting.add(item.id);
   try {
-    const plan = await organize(item, state.get().goals, key);
+    const raw = await organize(item, state.get().goals, key);
+    const plan = { ...raw, tasks: triage(raw.tasks, state.get().rules) };
     await state.update((latest) =>
       latest.captures.some((c) => c.id === item.id && !c.processed)
         ? {
@@ -47,4 +48,9 @@ export async function autoBackup(state: State, now = new Date()): Promise<void> 
     if (!writeBackup(latest, now)) return;
     await state.update((l) => ({ ...l, lastBackupAt: now.toISOString() }));
   } catch {}
+}
+
+export async function acceptChecks(state: State, now = new Date()): Promise<void> {
+  if (autoAccept(state.get().tasks, now) !== state.get().tasks)
+    await state.update((l) => ({ ...l, tasks: autoAccept(l.tasks, now) }));
 }

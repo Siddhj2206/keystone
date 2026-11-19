@@ -1,7 +1,7 @@
 /* eslint-disable import/first */
 jest.mock("./backup", () => ({ backupDue: jest.fn(() => true), writeBackup: jest.fn(() => "file://b.json") }));
 const organize = jest.fn();
-jest.mock("@keystone/core", () => ({ organize: (...a: unknown[]) => organize(...a) }));
+jest.mock("@keystone/core", () => ({ ...jest.requireActual("@keystone/core"), organize: (...a: unknown[]) => organize(...a) }));
 import { autoBackup, retryCaptures, sortCapture } from "./catch-up";
 import { createStateQueue } from "./state-queue";
 import type { Data } from "./store";

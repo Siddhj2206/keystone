@@ -20,6 +20,8 @@ export interface Task {
   captureId: string;
   area: Area;
   completedAt?: string;
+  /** Set while the guess waits in the Check stack; auto-accepted at this time. */
+  checkBy?: string;
 }
 export interface Capture {
   id: string;
@@ -282,3 +284,5 @@ export function focusTasks(tasks: Task[], now = new Date()): Task[] {
     )
     .slice(0, 3);
 }
+export * from "./intent";
+export * from "./check";

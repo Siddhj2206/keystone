@@ -2,11 +2,11 @@ import React from "react";
 import { View } from "react-native";
 import { router } from "expo-router";
 import { planDay } from "@keystone/core";
-import { useStore } from "../lib/store";
-import { Button, Card, Label, Page, usePalette } from "../lib/ui";
-import { TaskCard } from "../lib/task-card";
-import { CheckStack } from "../lib/check-stack";
-import { NowCard } from "../lib/now-card";
+import { useStore } from "../store";
+import { Button, Card, Label, Page, usePalette } from "../ui";
+import { TaskCard } from "../task-card";
+import { CheckStack } from "../check-stack";
+import { NowCard } from "../now-card";
 export default function Today(): React.JSX.Element {
   const { data } = useStore();
   const c = usePalette();

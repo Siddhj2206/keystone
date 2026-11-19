@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Platform } from "react-native";
-import { EveningToggle } from "../lib/evening-toggle";
-import { reminderMessage } from '../lib/reminder-message';
+import { EveningToggle } from "../evening-toggle";
+import { reminderMessage } from '../reminder-message';
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { useStore } from "../lib/store";
-import { Button, Card, Input, Label, Page } from "../lib/ui";
-import { scheduleReminders } from "../lib/reminders";
-import { RestoreButton } from "../lib/restore-button";
+import { useStore } from "../store";
+import { Button, Card, Input, Label, Page } from "../ui";
+import { scheduleReminders } from "../reminders";
+import { RestoreButton } from "../restore-button";
 export default function Settings(): React.JSX.Element {
   const { data, save, key, setKey } = useStore();
   const [draft, setDraft] = useState(key);

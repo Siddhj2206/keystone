@@ -1,8 +1,8 @@
 import React, { useRef } from "react";
-import { Button, Image, List, ProgressView, Section, Text, VStack, type TextFieldRef } from "@expo/ui/swift-ui";
+import { Button, Image, Label, List, ProgressView, Section, Text, VStack, type TextFieldRef } from "@expo/ui/swift-ui";
 import { accessibilityLabel, buttonBorderShape, buttonStyle, disabled, font, foregroundStyle, frame, listRowBackground, listRowSeparator, listStyle, padding, textInputAutocapitalization } from "@expo/ui/swift-ui/modifiers";
 import { hasCaptureContent } from "@keystone/core";
-import { NativeField, NativeHost, secondary } from "../native-ui";
+import { accent, NativeField, NativeHost, secondary } from "../native-ui";
 import { useCapture } from "../use-capture";
 
 export default function Capture(): React.JSX.Element {
@@ -53,7 +53,9 @@ export default function Capture(): React.JSX.Element {
           />
           {busy
             ? <ProgressView><Text>Organizing…</Text></ProgressView>
-            : <Button label="Organize" systemImage="arrow.up.circle" onPress={organize} modifiers={[disabled(unavailable)]} />}
+            : <Button onPress={organize} modifiers={[disabled(unavailable)]}>
+                <Label title="Organize" systemImage="arrow.up.circle" modifiers={[foregroundStyle(unavailable ? secondary : accent)]} />
+              </Button>}
         </Section>
         {!!message && <Section title="Result">
           <Text>{message}</Text>

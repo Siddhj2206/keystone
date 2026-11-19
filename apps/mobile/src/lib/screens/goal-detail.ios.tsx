@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Button, ContentUnavailableView, Label, List, Section, Text } from "@expo/ui/swift-ui";
-import { foregroundStyle, listStyle, padding } from "@expo/ui/swift-ui/modifiers";
+import { font, foregroundStyle, listStyle, padding } from "@expo/ui/swift-ui/modifiers";
 import { type Task } from "@keystone/core";
 import { NativeHost, secondary } from "../native-ui";
 import { GoalEditorSheet, GoalProgress, horizonName } from "../native-goal";
@@ -21,11 +21,12 @@ export default function GoalDetail(): React.JSX.Element {
   const targetDate = localDateOf(goal?.targetDate);
   return (
     <>
-      <Stack.Screen options={{ title: goal?.title ?? "Goal", headerBackTitle: "Goals" }} />
+      <Stack.Screen options={{ title: "Goal", headerBackTitle: "Goals", headerLargeTitleEnabled: false }} />
       <NativeHost>
         {goal ? (
           <List modifiers={[listStyle("insetGrouped")]}>
             <Section title="Overview">
+              <Text modifiers={[font({ textStyle: "title2", weight: "bold" }), padding({ vertical: 5 })]}>{goal.title}</Text>
               <Label title={horizonName[goal.horizon]} systemImage="flag" />
               {!!targetDate && <Label title={`Target: ${new Date(`${targetDate}T12:00:00`).toLocaleDateString(undefined, { dateStyle: "medium" })}`} systemImage="calendar" />}
               <GoalProgress tasks={tasks} />

@@ -4,7 +4,7 @@ A calm, local-first goals planner for a busy brain. Brain-dump with text or voic
 
 ## A little delight
 
-Pastel aurora gradients, colorful area accents, gentle completion celebrations and haptics make the routine feel lighter. iOS 26 uses native Liquid Glass cards and capture surfaces (`expo-glass-effect`), native liquid-glass tabs and a SwiftUI evening toggle (`@expo/ui`). Older iOS and web retain translucent cards over the same dark-mode-aware gradients. The CI explicitly selects Xcode 26 and prints the iPhone SDK version. Reduced-motion settings skip completion animation.
+iOS uses native navigation bars, SF Symbols and SwiftUI lists, forms and sheets via `@expo/ui`. On iOS 26, the system tab bar and voice capture button use Liquid Glass. Swipe a task to complete it or snooze it, or touch and hold for more actions. Completion uses haptics and respects Reduce Motion. The web preview uses the React Native layout.
 
 ## Workspace
 
@@ -37,7 +37,7 @@ Expo automatically resolves npm workspaces with Metro. SQLite web uses WASM and 
 ## Optional free Gemini key
 
 1. Create a key at **https://aistudio.google.com/apikey**, choosing a project with free-tier quota. Availability/limits vary by region and Google policy; no billing setup is required by Keystone.
-2. Open Settings in the installed app, paste the key and tap **Save key securely**. It stays in the iOS keychain, never in SQLite or exports.
+2. Open Settings in the installed app, paste the key and tap **Save API Key**. It stays in the iOS keychain, never in SQLite or exports.
 3. New captures use `gemini-2.5-flash`. Captured text and existing goal context are sent to Google. Review Google's free-tier data-use terms before sending personal information. Timeouts, quota errors and invalid output always fall back to the offline parser.
 
 Remove the key to return to local-only organizing. Offline rules recognize today, tomorrow, weekdays, next week, “by 25th”, and optional am/pm times; undated tasks stay undated. Commas/newlines and actionable “and” phrases split a dump, while titles like “data and algorithms” stay together. Categorized tasks attach to an existing goal in that area, or a new suggested goal is created automatically. Unclassified items remain in Today's Inbox; use Edit details to link them manually.
@@ -46,7 +46,7 @@ Remove the key to return to local-only organizing. Offline rules recognize today
 
 Enable local notification permission from Settings. Morning and optional 20:00 evening reminders repeat locally. Up to 60 nearest future task reminders are scheduled within iOS's notification limit. Morning focus counts are a snapshot from the last app visit, not background computation. Reopen the app to refresh schedules. Snoozing moves a task to tomorrow at 09:00. Dates without a time default to 18:00 local time.
 
-All goals, tasks, captures and preferences are stored in the on-device SQLite database; no analytics or remote database. Voice prefers on-device recognition when supported; otherwise Apple's recognition service may process audio. You can deny microphone access and still type. JSON export uses the native share sheet and excludes the API key. Exports contain personal data; store them safely. There is no import/sync or automatic cross-device backup feature.
+All goals, tasks, captures and preferences are stored in the on-device SQLite database; no analytics or remote database. Voice prefers on-device recognition when supported; otherwise Apple's recognition service may process audio. You can deny microphone access and still type. JSON export uses the native share sheet and excludes the API key. On iOS, weekly backups appear in Files › On My iPhone › Keystone. **Restore Backup** replaces the current plan with a backup you choose. There is no automatic cross-device sync.
 
 ## Quick capture from anywhere
 

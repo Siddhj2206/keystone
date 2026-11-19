@@ -1,25 +1,24 @@
 import React from "react";
 import { NativeTabs } from "expo-router/native-tabs";
-import { usePalette } from "./ui";
+import { PlatformColor } from "react-native";
 export function TabNavigation(): React.JSX.Element {
-  const c = usePalette();
   return (
-    <NativeTabs tintColor={c.accent}>
-      <NativeTabs.Trigger name="index">
+    <NativeTabs tintColor={PlatformColor("systemIndigo")}>
+      <NativeTabs.Trigger name="(today)">
         <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="sun.max.fill" />
+        <NativeTabs.Trigger.Icon sf={{ default: "sun.max", selected: "sun.max.fill" }} />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="capture">
+      <NativeTabs.Trigger name="(capture)">
         <NativeTabs.Trigger.Label>Capture</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="plus.circle.fill" />
+        <NativeTabs.Trigger.Icon sf={{ default: "plus.circle", selected: "plus.circle.fill" }} />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="goals">
+      <NativeTabs.Trigger name="(goals)">
         <NativeTabs.Trigger.Label>Goals</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="sparkles" />
+        <NativeTabs.Trigger.Icon sf="target" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="settings">
+      <NativeTabs.Trigger name="(settings)">
         <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="slider.horizontal.3" />
+        <NativeTabs.Trigger.Icon sf="gearshape" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

@@ -30,6 +30,7 @@ interface Store {
   key: string;
   setKey: (key: string) => Promise<void>;
   save: (data: Data) => Promise<void>;
+  saveReminderPreferences: (changes: Partial<Pick<Data, "morning" | "evening">>) => Promise<Data>;
   capture: (text: string, source: "text" | "voice") => Promise<string>;
   updateTask: (task: Task) => Promise<void>;
   restore: (json: string) => Promise<void>;
@@ -135,6 +136,10 @@ export function StoreProvider({
   async function save(next: Data): Promise<void> {
     await state.update(() => next);
   }
+  async function saveReminderPreferences(changes: Partial<Pick<Data, "morning" | "evening">>): Promise<Data> {
+    await state.update((latest) => ({ ...latest, ...changes }));
+    return state.get();
+  }
   async function setKey(value: string): Promise<void> {
     if (Platform.OS === "web" && value)
       throw Error("API keys are only stored in the iOS secure keychain.");
@@ -183,7 +188,7 @@ export function StoreProvider({
   }
   return (
     <Context.Provider
-      value={{ data, ready, error, key, setKey, save, capture, updateTask, restore, resolveCheck, act, canUndo: !!undoTo, undo }}
+      value={{ data, ready, error, key, setKey, save, saveReminderPreferences, capture, updateTask, restore, resolveCheck, act, canUndo: !!undoTo, undo }}
     >
       {children}
     </Context.Provider>

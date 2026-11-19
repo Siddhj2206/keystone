@@ -233,15 +233,23 @@ export async function organize(
             (typeof t.goalId !== 'string' || !t.goalId.trim() || ![...existing, ...plan.goals].some((g) => g.id === t.goalId)))
         )
           throw Error("Invalid task");
+      const goalIds = new Map<string,string>();
+      const usedIds = new Set(existing.map(g=>g.id));
+      for (const goal of plan.goals as Goal[]) {
+        if(goalIds.has(goal.id)) throw Error('Ambiguous goal IDs');
+        let freshId = id();
+        while(usedIds.has(freshId)) freshId = id();
+        usedIds.add(freshId);goalIds.set(goal.id,freshId);
+      }
       return {
         engine: "gemini",
-        goals: plan.goals.map((g: Goal) => ({id:g.id,title:g.title.trim(),area:g.area,horizon:g.horizon,notes:g.notes || '',targetDate:g.targetDate})),
+        goals: plan.goals.map((g: Goal) => ({id:goalIds.get(g.id)!,title:g.title.trim(),area:g.area,horizon:g.horizon,notes:g.notes || '',targetDate:g.targetDate})),
         tasks: plan.tasks.map((t: Task) => ({
           title:t.title.trim(),
           area:t.area,
           priority:t.priority,
           minutes:t.minutes,
-          goalId:t.goalId,
+          goalId:t.goalId ? goalIds.get(t.goalId) || t.goalId : undefined,
           dueDate:t.dueDate,
           id: id(),
           notes: t.notes || "",

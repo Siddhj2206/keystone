@@ -47,3 +47,7 @@ Remove the key to return to local-only organizing. Offline rules recognize today
 Enable local notification permission from Settings. Morning and optional 20:00 evening reminders repeat locally. Up to 60 nearest future task reminders are scheduled within iOS's notification limit. Morning focus counts are a snapshot from the last app visit, not background computation. Reopen the app to refresh schedules. Snoozing moves a task to tomorrow at 09:00. Dates without a time default to 18:00 local time.
 
 All goals, tasks, captures and preferences are stored in the on-device SQLite database; no analytics or remote database. Voice prefers on-device recognition when supported; otherwise Apple's recognition service may process audio. You can deny microphone access and still type. JSON export uses the native share sheet and excludes the API key. Exports contain personal data; store them safely. There is no import/sync or automatic cross-device backup feature.
+
+## Quick capture from anywhere
+
+Keystone opens straight into capture from the `keystone://capture` link, and `keystone://capture?voice=1` starts listening right away. To use it from the Action Button or Back Tap, make a Shortcut with one **Open URL** action set to `keystone://capture?voice=1`, then pick that Shortcut under Settings › Action Button (or Accessibility › Touch › Back Tap). No widget or app extension is needed, so it works with AppDrop's free signing.

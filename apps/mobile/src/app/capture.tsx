@@ -1,4 +1,5 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
 import { hasCaptureContent } from '@keystone/core';
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -18,6 +19,7 @@ export default function Capture(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const voice = useRef(false);
+  const { voice: startVoice } = useLocalSearchParams<{ voice?: string }>();
   const prefix = useRef("");
   useSpeechRecognitionEvent("start", () => setListening(true));
   useSpeechRecognitionEvent("end", () => setListening(false));
@@ -59,6 +61,14 @@ export default function Capture(): React.JSX.Element {
       setMessage("Could not start voice capture. Try typing instead.");
     }
   }
+  // keystone://capture?voice=1 (Action Button / Shortcuts) starts listening right away.
+  useEffect(() => {
+    if (startVoice !== "1") return;
+    router.setParams({ voice: undefined });
+    const t = setTimeout(() => void mic(), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startVoice]);
   async function submit(): Promise<void> {
     setBusy(true);
     try {

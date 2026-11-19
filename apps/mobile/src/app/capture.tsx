@@ -62,11 +62,18 @@ export default function Capture(): React.JSX.Element {
     }
   }
   // keystone://capture?voice=1 (Action Button / Shortcuts) starts listening right away.
+  const autoStarted = useRef(false);
   useEffect(() => {
-    if (startVoice !== "1") return;
-    router.setParams({ voice: undefined });
-    const t = setTimeout(() => void mic(), 0);
-    return () => clearTimeout(t);
+    if (startVoice !== "1") {
+      autoStarted.current = false;
+      return;
+    }
+    if (autoStarted.current) return;
+    autoStarted.current = true;
+    setTimeout(() => {
+      void mic();
+      router.setParams({ voice: undefined });
+    }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startVoice]);
   async function submit(): Promise<void> {

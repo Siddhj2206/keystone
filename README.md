@@ -37,7 +37,7 @@ Expo automatically resolves npm workspaces with Metro. SQLite web uses WASM and 
 ## Optional free Gemini key
 
 1. Create a key at **https://aistudio.google.com/apikey**, choosing a project with free-tier quota. Availability/limits vary by region and Google policy; no billing setup is required by Keystone.
-2. Open Settings in the installed app, paste the key and tap **Save API Key**. It stays in the iOS keychain, never in SQLite or exports.
+2. Open Settings in the installed app and paste the key. On iOS, tap **Done** or leave the field to save it. It stays in the secure keychain, never in SQLite or exports.
 3. New captures use `gemini-2.5-flash`. Captured text and existing goal context are sent to Google. Review Google's free-tier data-use terms before sending personal information. Timeouts, quota errors and invalid output always fall back to the offline parser.
 
 Remove the key to return to local-only organizing. Offline rules recognize today, tomorrow, weekdays, next week, “by 25th”, and optional am/pm times; undated tasks stay undated. Commas/newlines and actionable “and” phrases split a dump, while titles like “data and algorithms” stay together. Categorized tasks attach to an existing goal in that area, or a new suggested goal is created automatically. Unclassified items remain in Today's Inbox; use Edit details to link them manually.

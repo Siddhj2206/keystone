@@ -1,4 +1,4 @@
-import { localDateOf, deadlineForDate } from './task-dates';
+import { localDateOf, deadlineForDate, withDueTime } from './task-dates';
 test('notes/title-only edits preserve the exact due time',()=>{
  const due=new Date(2026,10,19,16,30,15).toISOString();
  expect(deadlineForDate(due,localDateOf(due))).toBe(due);
@@ -18,4 +18,7 @@ test('changed dates default to 18:00 local; removing a date clears it',()=>{
 });
 test('invalid persisted dates are safe and impossible dates are rejected',()=>{
  expect(localDateOf(0)).toBe('');expect(localDateOf('invalid')).toBe('');expect(()=>deadlineForDate(undefined,'2026-02-30')).toThrow();expect(()=>deadlineForDate(undefined,'Friday')).toThrow();
+});
+test('selecting a due time combines its local hour and minute with the selected date',()=>{
+ expect(withDueTime('2026-11-21', new Date(2026, 10, 19, 9, 45, 12))).toBe(new Date(2026, 10, 21, 9, 45).toISOString());
 });

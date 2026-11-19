@@ -4,10 +4,10 @@ import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { reminderMessage } from "./reminder-message";
 import { scheduleReminders } from "./reminders";
-import { useStore } from "./store";
+import { type Data, useStore } from "./store";
 
 export function useSettings() {
-  const { data, save, key, setKey } = useStore();
+  const { data, saveReminderPreferences, key, setKey } = useStore();
   const [draft, setDraft] = useState(key);
   const [time, setTime] = useState(data.morning);
   const [evening, setEvening] = useState(data.evening);
@@ -18,10 +18,11 @@ export function useSettings() {
     setEvening(data.evening);
   }
   const [message, setMessage] = useState("");
-  async function saveKey() {
+  async function saveKey(value = draft) {
+    const trimmed = value.trim();
     try {
-      await setKey(draft.trim());
-      setMessage(draft.trim() ? "Key saved in your secure keychain." : "Key removed. Using offline sorting.");
+      if (trimmed !== key) await setKey(trimmed);
+      setMessage(trimmed ? "Key saved in your secure keychain." : "Key removed. Using offline sorting.");
     } catch (e) {
       setMessage(String(e));
     }
@@ -35,14 +36,14 @@ export function useSettings() {
       setMessage(String(e));
     }
   }
-  async function saveReminders() {
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+  async function saveReminders(changes: Partial<Pick<Data, "morning" | "evening">> = { morning: time, evening }) {
+    if (changes.morning !== undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(changes.morning)) {
       setMessage("Enter a valid 24-hour time, like 09:00.");
       return;
     }
     try {
-      await save({ ...data, morning: time, evening });
-      const ok = await scheduleReminders(data.tasks, time, evening, true);
+      const saved = await saveReminderPreferences(changes);
+      const ok = await scheduleReminders(saved.tasks, saved.morning, saved.evening, true);
       setMessage(reminderMessage(ok, Platform.OS));
     } catch (e) {
       setMessage(String(e));

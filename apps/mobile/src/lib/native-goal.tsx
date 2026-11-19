@@ -1,12 +1,22 @@
 import React, { useState } from "react";
+import { PlatformColor } from "react-native";
+import type { SFSymbol } from "expo-symbols";
 import { Picker, ProgressView, Section, Text, VStack } from "@expo/ui/swift-ui";
 import { font, foregroundStyle, padding, progressViewStyle, tag } from "@expo/ui/swift-ui/modifiers";
-import { id, type Goal, type Task } from "@keystone/core";
+import { id, type Area, type Goal, type Task } from "@keystone/core";
 import { NativeField, secondary } from "./native-ui";
 import { EditorSheet, OptionalDate } from "./task-editor-sheet";
 import { localDateOf } from "./task-dates";
 
 export const horizonName = { short: "Short term", long: "Long term" } as const;
+export const goalAreaAppearance = {
+  academics: ["graduationcap.fill", "systemBlue"],
+  career: ["briefcase.fill", "systemIndigo"],
+  skills: ["lightbulb.fill", "systemOrange"],
+  health: ["heart.fill", "systemPink"],
+  life: ["house.fill", "systemGreen"],
+  other: ["target", "secondaryLabel"],
+} satisfies Record<Area, [SFSymbol, Parameters<typeof PlatformColor>[0]]>;
 
 export function GoalProgress({ tasks }: { tasks: Task[] }) {
   const done = tasks.filter((task) => task.status === "done").length;
@@ -14,7 +24,7 @@ export function GoalProgress({ tasks }: { tasks: Task[] }) {
     <VStack alignment="leading" spacing={6} modifiers={[padding({ top: 4 })]}>
       <ProgressView value={done / Math.max(tasks.length, 1)} modifiers={[progressViewStyle("linear")]} />
       <Text modifiers={[font({ textStyle: "caption" }), foregroundStyle(secondary)]}>
-        {`${done} of ${tasks.length} steps complete`}
+        {`${done} of ${tasks.length} ${tasks.length === 1 ? "step" : "steps"} complete`}
       </Text>
     </VStack>
   );

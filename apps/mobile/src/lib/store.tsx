@@ -68,8 +68,7 @@ export function StoreProvider({
     const catchUp = (): void => {
       void retryCaptures(state, key);
       void autoBackup(state);
-      void acceptChecks(state);
-      void recoverMissed(state);
+      void acceptChecks(state).then(() => recoverMissed(state));
     };
     catchUp();
     const sub = AppState.addEventListener("change", (s) => s === "active" && catchUp());

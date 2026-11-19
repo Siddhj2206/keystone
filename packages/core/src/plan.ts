@@ -27,16 +27,17 @@ export function missed(tasks: Task[], now = new Date()): Task[] {
   return tasks.filter((t) => t.status !== "done" && t.dueDate && due(t) < now.getTime() - DAY);
 }
 
-/** Spreads missed undated-priority work over the next days so the plan never shows a backlog all at once. */
+/** Spreads missed work two per day starting today, so the plan never shows a backlog all at once. */
 export function recover(tasks: Task[], now = new Date()): Task[] {
   const late = missed(tasks, now).sort((a, b) => b.priority - a.priority);
   if (!late.length) return tasks;
   const moved = new Map(
     late.map((t, i) => {
       const d = new Date(now);
-      d.setDate(d.getDate() + 1 + Math.floor(i / 2));
+      d.setDate(d.getDate() + Math.floor(i / 2));
       d.setHours(9, 0, 0, 0);
-      return [t.id, { ...t, status: "snoozed" as const, dueDate: d.toISOString(), notes: t.notes || "Carried over" }];
+      // Two come back today, so a late return never hides everything again.
+      return [t.id, { ...t, status: i < 2 ? ("todo" as const) : ("snoozed" as const), dueDate: d.toISOString(), notes: t.notes || "Carried over" }];
     }),
   );
   return tasks.map((t) => moved.get(t.id) ?? t);

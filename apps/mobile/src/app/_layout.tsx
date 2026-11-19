@@ -10,7 +10,7 @@ function Navigation(): React.JSX.Element {
   const { data, ready, error } = useStore();
   useEffect(() => {
     if (ready)
-      scheduleReminders(data.tasks, data.morning, data.evening).catch(() => {});
+      scheduleReminders(data.tasks, data.morning, data.evening,false,data.goals).catch(() => {});
   }, [data, ready]);
   if (error) return <Label>Could not open local storage: {error}</Label>;
   if (!ready) return <Label>Opening your space…</Label>;

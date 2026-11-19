@@ -43,7 +43,7 @@ export function useSettings() {
     }
     try {
       const saved = await saveReminderPreferences(changes);
-      const ok = await scheduleReminders(saved.tasks, reminderTimeOrDefault(saved.morning), saved.evening, true);
+      const ok = await scheduleReminders(saved.tasks, reminderTimeOrDefault(saved.morning), saved.evening, true,saved.goals);
       setMessage(reminderMessage(ok, Platform.OS));
     } catch (e) {
       setMessage(String(e));

@@ -1,9 +1,9 @@
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
-import { Task, focusTasks } from "@keystone/core";
+import { Task, Goal, planDay } from "@keystone/core";
 let pending = Promise.resolve();
-export function scheduleReminders(tasks:Task[],morning:string,evening:boolean,request=false):Promise<boolean> {
-  const result = pending.then(()=>replaceReminders(tasks,morning,evening,request));
+export function scheduleReminders(tasks:Task[],morning:string,evening:boolean,request=false,goals:Goal[]=[]):Promise<boolean> {
+  const result = pending.then(()=>replaceReminders(tasks,morning,evening,request,goals));
   pending = result.then(()=>{},()=>{});
   return result;
 }
@@ -12,6 +12,7 @@ async function replaceReminders(
   morning: string,
   evening: boolean,
   request = false,
+  goals:Goal[] = [],
 ): Promise<boolean> {
   if (Platform.OS === "web") return false;
   const permission = request
@@ -24,7 +25,7 @@ async function replaceReminders(
     identifier: 'keystone-morning',
     content: {
       title: "A little direction for today",
-      body: `${focusTasks(tasks).length} focus picks are waiting. Start with just one.`,
+      body: `${planDay(tasks,goals).length} focus picks are waiting. Start with just one.`,
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,

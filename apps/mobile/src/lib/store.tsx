@@ -170,8 +170,8 @@ export function StoreProvider({
   async function updateTask(task: Task): Promise<void> {
     await state.update(latest => ({
       ...latest,
-      // Linking a goal settles the area, so the task leaves Check.
-      tasks: latest.tasks.map((t) => (t.id === task.id ? (task.goalId ? { ...task, checkBy: undefined } : task) : t)),
+      // Newly linking a goal settles the area, so the task leaves Check.
+      tasks: latest.tasks.map((t) => (t.id !== task.id ? t : task.goalId && task.goalId !== t.goalId ? { ...task, checkBy: undefined } : task)),
     }));
   }
   return (

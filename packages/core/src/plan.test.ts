@@ -36,3 +36,9 @@ test("Now card answers", () => {
   expect(big).toHaveLength(2);
   expect(nowAction([t], t, "stuck", now)[0].title).toMatch(/blocking/);
 });
+
+test("tasks waiting in Check don't take recovery slots", () => {
+  const out = recover([task("chk", { dueDate: "2026-11-15T10:00:00Z", checkBy: "2026-11-20T00:00:00Z" }), task("a", { dueDate: "2026-11-15T10:00:00Z" })], now);
+  expect(out[0].dueDate).toBe("2026-11-15T10:00:00Z");
+  expect(out[1].status).toBe("todo");
+});

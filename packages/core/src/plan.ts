@@ -24,7 +24,7 @@ export function planDay(tasks: Task[], goals: Goal[], now = new Date()): Task[] 
 
 /** Tasks whose deadline passed more than a day ago: shown as a fresh start, not a wall. */
 export function missed(tasks: Task[], now = new Date()): Task[] {
-  return tasks.filter((t) => t.status !== "done" && t.dueDate && due(t) < now.getTime() - DAY);
+  return tasks.filter((t) => t.status !== "done" && !t.checkBy && t.dueDate && due(t) < now.getTime() - DAY);
 }
 
 /** Spreads missed work two per day starting today, so the plan never shows a backlog all at once. */

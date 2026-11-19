@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Animated, Pressable, View, AccessibilityInfo } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Task } from "@keystone/core";
@@ -21,7 +21,7 @@ export function TaskCard({
   const [notes, setNotes] = useState(task.notes);
   const [error, setError] = useState("");
   const [celebrating, setCelebrating] = useState(false);
-  const scale = useRef(new Animated.Value(1)).current;
+  const [scale] = useState(() => new Animated.Value(1));
   const areaColors = {
     academics: "#9c6ce5",
     career: "#eb9168",

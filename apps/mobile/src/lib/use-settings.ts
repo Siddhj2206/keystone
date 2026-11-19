@@ -2,19 +2,19 @@ import { useState } from "react";
 import { Platform } from "react-native";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { reminderMessage } from "./reminder-message";
+import { isReminderTime, reminderMessage, reminderTimeOrDefault } from "./reminder-message";
 import { scheduleReminders } from "./reminders";
 import { type Data, useStore } from "./store";
 
 export function useSettings() {
   const { data, saveReminderPreferences, key, setKey } = useStore();
   const [draft, setDraft] = useState(key);
-  const [time, setTime] = useState(data.morning);
+  const [time, setTime] = useState(() => reminderTimeOrDefault(data.morning));
   const [evening, setEvening] = useState(data.evening);
   const [shown, setShown] = useState({ morning: data.morning, evening: data.evening });
   if (shown.morning !== data.morning || shown.evening !== data.evening) {
     setShown({ morning: data.morning, evening: data.evening });
-    setTime(data.morning);
+    setTime(reminderTimeOrDefault(data.morning));
     setEvening(data.evening);
   }
   const [message, setMessage] = useState("");
@@ -37,13 +37,13 @@ export function useSettings() {
     }
   }
   async function saveReminders(changes: Partial<Pick<Data, "morning" | "evening">> = { morning: time, evening }) {
-    if (changes.morning !== undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(changes.morning)) {
+    if (changes.morning !== undefined && !isReminderTime(changes.morning)) {
       setMessage("Enter a valid 24-hour time, like 09:00.");
       return;
     }
     try {
       const saved = await saveReminderPreferences(changes);
-      const ok = await scheduleReminders(saved.tasks, saved.morning, saved.evening, true);
+      const ok = await scheduleReminders(saved.tasks, reminderTimeOrDefault(saved.morning), saved.evening, true);
       setMessage(reminderMessage(ok, Platform.OS));
     } catch (e) {
       setMessage(String(e));

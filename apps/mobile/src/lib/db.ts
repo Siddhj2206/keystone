@@ -9,6 +9,7 @@ export interface Rows {
 }
 type Table = "tasks" | "goals" | "captures";
 const tables: Table[] = ["tasks", "goals", "captures"];
+const taskOrderKey = '__taskOrder';
 const db = SQLite.openDatabaseAsync("keystone.db");
 let saved: Record<Table, Map<string, string>> & { prefs: Map<string, string> } = {
   tasks: new Map(),
@@ -46,7 +47,12 @@ export async function loadRows(): Promise<Rows | undefined> {
   const prefRows = await c.getAllAsync<{ key: string; json: string }>("SELECT key, json FROM prefs");
   saved.prefs = new Map(prefRows.map((r) => [r.key, r.json]));
   if (!tasks.length && !goals.length && !captures.length && !prefRows.length) return undefined;
-  return { tasks, goals, captures, prefs: Object.fromEntries(prefRows.map((r) => [r.key, JSON.parse(r.json)])) };
+  const order:unknown=JSON.parse(saved.prefs.get(taskOrderKey)??'null');
+  if(Array.isArray(order)&&order.every(id=>typeof id==='string')) {
+    const positions=new Map(order.map((id,index)=>[id,index]));
+    tasks.sort((a,b)=>(positions.get(a.id)??Infinity)-(positions.get(b.id)??Infinity));
+  }
+  return { tasks, goals, captures, prefs: Object.fromEntries(prefRows.filter(r=>r.key!==taskOrderKey).map((r) => [r.key, JSON.parse(r.json)])) };
 }
 
 function columns(table: Table, row: Task | Goal | Capture): unknown[] {
@@ -67,7 +73,7 @@ const insert: Record<Table, string> = {
   captures: "INSERT INTO captures (id, processed, created_at, json) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET processed=excluded.processed, created_at=excluded.created_at, json=excluded.json",
 };
 
-/** Writes only the rows that changed since the last load or save. Upserts keep each row's rowid, so load order matches array order. */
+/** Writes changed rows and persists task array order independently of SQLite rowids. */
 export async function saveRows(rows: Rows): Promise<void> {
   const c = await db;
   const next = { tasks: new Map<string, string>(), goals: new Map<string, string>(), captures: new Map<string, string>(), prefs: new Map<string, string>() };
@@ -79,7 +85,7 @@ export async function saveRows(rows: Rows): Promise<void> {
         if (saved[table].get(row.id) !== json)
           await c.runAsync(insert[table], row.id, ...(columns(table, row) as SQLite.SQLiteBindValue[]), json);
       }
-    for (const [key, value] of Object.entries(rows.prefs)) {
+    for (const [key, value] of Object.entries({...rows.prefs,[taskOrderKey]:rows.tasks.map(t=>t.id)})) {
       if (value === undefined) continue;
       const json = JSON.stringify(value);
       next.prefs.set(key, json);

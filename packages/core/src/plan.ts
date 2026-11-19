@@ -36,7 +36,7 @@ export function recover(tasks: Task[], now = new Date()): Task[] {
       const d = new Date(now);
       d.setDate(d.getDate() + 1 + Math.floor(i / 2));
       d.setHours(9, 0, 0, 0);
-      return [t.id, { ...t, status: "todo" as const, dueDate: d.toISOString(), notes: t.notes || "Carried over" }];
+      return [t.id, { ...t, status: "snoozed" as const, dueDate: d.toISOString(), notes: t.notes || "Carried over" }];
     }),
   );
   return tasks.map((t) => moved.get(t.id) ?? t);

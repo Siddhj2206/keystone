@@ -49,9 +49,10 @@ export function matchTask(query: string, tasks: Task[]): Task | undefined {
     if (t.status === "done") continue;
     const title = new Set(words(t.title));
     const hit = q.filter((w) => title.has(w) || [...title].some((x) => x.length > 3 && (x.startsWith(w) || w.startsWith(x)))).length / q.length;
-    if (hit > score) [best, score] = [t, hit];
+    const fit = hit - title.size / 1000;
+    if (hit >= 0.5 && fit > score) [best, score] = [t, fit];
   }
-  return score >= 0.5 ? best : undefined;
+  return best;
 }
 
 const list = (ts: Task[]) => ts.map((t) => t.title).join(", ");

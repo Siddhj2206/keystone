@@ -58,3 +58,11 @@ test("checks are accepted after 48 hours", () => {
   const same = [keep];
   expect(autoAccept(same, now)).toBe(same);
 });
+
+test("words like constructor are not learned areas", () => {
+  expect(triage([task("Read constructor chapter")], {}, now)[0].area).toBe("academics");
+});
+
+test("prefers the closest title when several match", () => {
+  expect(matchTask("resume", [task("Update resume"), task("Resume")])?.title).toBe("Resume");
+});

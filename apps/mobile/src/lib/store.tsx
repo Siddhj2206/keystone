@@ -52,7 +52,8 @@ export function StoreProvider({
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const [key, setKeyState] = useState("");
-  const [undoTo, setUndoTo] = useState<Pick<Data, "tasks" | "goals" | "captures">>();
+  // Reverses only the last command or capture, leaving later edits alone.
+  const [undoTo, setUndoTo] = useState<{ run: (l: Data) => Data }>();
   useEffect(() => {
     (async () => {
       const rows = await loadRows();
@@ -83,15 +84,20 @@ export function StoreProvider({
     }));
   }
   async function act(task: Task, action: NowAction): Promise<void> {
+    const before = new Set(state.get().tasks.map((t) => t.id));
     await state.update((l) => ({ ...l, tasks: nowAction(l.tasks, task, action) }));
+    const added = new Set(state.get().tasks.filter((t) => !before.has(t.id)).map((t) => t.id));
+    remember((l) => ({
+      ...l,
+      tasks: l.tasks.filter((t) => !added.has(t.id)).map((t) => (t.id === task.id ? task : t)),
+    }));
   }
-  function remember(): void {
-    const { tasks, goals, captures } = state.get();
-    setUndoTo({ tasks, goals, captures });
+  function remember(run: (l: Data) => Data): void {
+    setUndoTo({ run });
   }
   async function undo(): Promise<void> {
     if (!undoTo) return;
-    await state.update((l) => ({ ...l, ...undoTo }));
+    await state.update(undoTo.run);
     setUndoTo(undefined);
   }
   async function command(text: string): Promise<string | undefined> {
@@ -102,7 +108,13 @@ export function StoreProvider({
     if (intent.kind === "capture") return undefined;
     const task = matchTask(intent.query, latest.tasks);
     if (!task) return undefined;
-    remember();
+    const at = latest.tasks.indexOf(task);
+    remember((l) => ({
+      ...l,
+      tasks: l.tasks.some((t) => t.id === task.id)
+        ? l.tasks.map((t) => (t.id === task.id ? task : t))
+        : [...l.tasks.slice(0, at), task, ...l.tasks.slice(at)],
+    }));
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(9, 0, 0, 0);
@@ -144,7 +156,6 @@ export function StoreProvider({
     if (!hasCaptureContent(text)) throw Error("Add a thought with some letters or numbers first.");
     const handled = await command(text);
     if (handled) return handled;
-    remember();
     const item: Capture = {
       id: id(),
       text: text.trim(),
@@ -153,6 +164,13 @@ export function StoreProvider({
       processed: false,
     };
     await state.update(latest => ({ ...latest, captures: [...latest.captures, item] }));
+    const goalsBefore = new Set(state.get().goals.map((g) => g.id));
+    remember((l) => ({
+      ...l,
+      captures: l.captures.filter((c) => c.id !== item.id),
+      tasks: l.tasks.filter((t) => t.captureId !== item.id),
+      goals: l.goals.filter((g) => goalsBefore.has(g.id) || l.tasks.some((t) => t.goalId === g.id && t.captureId !== item.id)),
+    }));
     let plan;
     try {
       plan = await sortCapture(state, item, key);

@@ -1,4 +1,4 @@
-import { answer, autoAccept, classify, matchTask, ruleWord, triage, Task } from "./index";
+import { answer, autoAccept, classify, matchTask, ruleWord, triage, Task, refileTask } from "./index";
 
 const task = (title: string, extra: Partial<Task> = {}): Task => ({
   id: title, title, notes: "", priority: 2, minutes: 30, status: "todo", captureId: "c", area: "academics", ...extra,
@@ -61,6 +61,13 @@ test("checks are accepted after 48 hours", () => {
 
 test("words like constructor are not learned areas", () => {
   expect(triage([task("Read constructor chapter")], {}, now)[0].area).toBe("academics");
+});
+test('learned or explicit area corrections remove stale goal links and settle Check',()=>{
+ const original=task('Call Rahul',{area:'academics',goalId:'semester',checkBy:'2026-11-20T00:00:00Z'});
+ expect(triage([original],{rahul:'career'},now)[0]).toMatchObject({area:'career',goalId:undefined,checkBy:undefined});expect(refileTask(original,'career').goalId).toBeUndefined();expect(original.goalId).toBe('semester');
+});
+test('same-area corrections preserve goal links; empty and unmatched triage are unchanged',()=>{
+ const original=task('Read textbook',{goalId:'semester'});expect(triage([original],{textbook:'academics'},now)[0].goalId).toBe('semester');expect(refileTask(original,'academics').goalId).toBe('semester');expect(triage([],{},now)).toEqual([]);expect(triage([original],{},now)[0]).toBe(original);
 });
 
 test("prefers the closest title when several match", () => {

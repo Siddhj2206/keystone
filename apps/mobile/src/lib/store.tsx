@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AppState, Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import { Area, Capture, Goal, Rules, Task, NowAction, answer, classify, planDay, id, nowAction, hasCaptureContent, matchTask, ruleWord } from "@keystone/core";
+import { Area, Capture, Goal, Rules, Task, NowAction, answer, classify, planDay, id, nowAction, hasCaptureContent, matchTask, ruleWord, refileTask } from "@keystone/core";
 import { createStateQueue } from './state-queue';
 import { loadRows, saveRows } from "./db";
 import { parseBackup } from "./backup";
@@ -81,7 +81,7 @@ export function StoreProvider({
     await state.update((l) => ({
       ...l,
       rules: word ? { ...l.rules, [word]: area! } : l.rules,
-      tasks: l.tasks.map((t) => (t.id === task.id ? { ...t, area: area ?? t.area, checkBy: undefined } : t)),
+      tasks: l.tasks.map((t) => (t.id === task.id ? refileTask(t,area??t.area) : t)),
     }));
   }
   async function act(task: Task, action: NowAction): Promise<void> {

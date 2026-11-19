@@ -6,6 +6,10 @@ const stop = new Set(["the", "and", "for", "with", "from", "this", "that", "abou
 /** Learned area corrections, keyed by a lower-case word from the task title. */
 export type Rules = Record<string, Area>;
 
+export function refileTask(task:Task,area:Area):Task {
+  return {...task,area,goalId:area===task.area?task.goalId:undefined,checkBy:undefined};
+}
+
 /** The word a correction is remembered by: the longest meaningful word in the title. */
 export function ruleWord(title: string): string | undefined {
   return (title.toLowerCase().match(/[a-z0-9]+/g) ?? [])
@@ -17,7 +21,7 @@ export function ruleWord(title: string): string | undefined {
 export function triage(tasks: Task[], rules: Rules = {}, now = new Date()): Task[] {
   return tasks.map((t) => {
     const learned = (t.title.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter((w) => Object.prototype.hasOwnProperty.call(rules, w)).map((w) => rules[w])[0];
-    if (learned) return { ...t, area: learned };
+    if (learned) return refileTask(t,learned);
     if (t.area !== "other") return t;
     return { ...t, checkBy: new Date(now.getTime() + CHECK_HOURS * 3600000).toISOString() };
   });

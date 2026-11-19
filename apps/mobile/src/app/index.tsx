@@ -22,9 +22,10 @@ export default function Today(): React.JSX.Element {
       Date.parse(t.dueDate) >= now.getTime() &&
       Date.parse(t.dueDate) < now.getTime() + 7 * 86400000,
   );
-  const noGoal = remaining.filter((t) => !t.goalId && !t.checkBy);
-  const inbox = noGoal.filter((t) => t.area === "other");
-  const byArea = [...new Set(noGoal.map((t) => t.area))]
+  const noGoal = remaining.filter((t) => !t.goalId);
+  // Tasks still in Check stay editable here until their area is confirmed.
+  const inbox = noGoal.filter((t) => t.area === "other" || t.checkBy);
+  const byArea = [...new Set(noGoal.filter((t) => !t.checkBy).map((t) => t.area))]
     .filter((a) => a !== "other")
     .map((a) => [a, noGoal.filter((t) => t.area === a)] as const);
   return (

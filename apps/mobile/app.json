@@ -18,7 +18,8 @@
           "microphonePermission": "Allow Keystone to capture your brain dump.",
           "speechRecognitionPermission": "Allow Keystone to transcribe your voice."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "bundleIdentifier": "com.siddhj2206.keystone",

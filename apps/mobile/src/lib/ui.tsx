@@ -1,36 +1,64 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Glass } from "./glass";
 import {
   Text,
   View,
   Pressable,
   TextInput,
-  useColorScheme,
   ScrollView,
+  Animated,
+  AccessibilityInfo,
+  StyleSheet,
+  Platform,
 } from "react-native";
+import { Area } from "@keystone/core";
+import { Glass } from "./glass";
+import { looks } from "./looks";
+import { useLook } from "./use-look";
 export function usePalette() {
-  const dark = useColorScheme() === "dark";
-  return dark
-    ? {
-        bg: "#16132e",
-        card: "#292241c9",
-        ink: "#faf4ff",
-        muted: "#bdb1d5",
-        line: "#9e8ac533",
-        accent: "#d3b2ff",
-        accentInk: "#2d174b",
+  return looks[useLook().look];
+}
+export function usePulse(enabled = true) {
+  const [value] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    let active = true;
+    let animation: Animated.CompositeAnimation | undefined;
+    const configure = (reduced: boolean) => {
+      animation?.stop();
+      value.setValue(0);
+      if (active && enabled && !reduced) {
+        animation = Animated.loop(
+          Animated.sequence([
+            Animated.timing(value, {
+              toValue: 1,
+              duration: 3200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(value, {
+              toValue: 0,
+              duration: 3200,
+              useNativeDriver: true,
+            }),
+          ]),
+        );
+        animation.start();
       }
-    : {
-        bg: "#f4efff",
-        card: "#ffffffb8",
-        ink: "#30244c",
-        muted: "#796c90",
-        line: "#bca4d633",
-        accent: "#7952c9",
-        accentInk: "#ffffff",
-      };
+    };
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(configure)
+      .catch(() => {});
+    const listener = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      configure,
+    );
+    return () => {
+      active = false;
+      animation?.stop();
+      listener.remove();
+    };
+  }, [value, enabled]);
+  return value;
 }
 export function Label({
   children,
@@ -41,10 +69,41 @@ export function Label({
   return (
     <Text
       {...props}
-      style={[{ color: c.ink, fontSize: 15, lineHeight: 23 }, style]}
+      style={[
+        {
+          color: c.ink,
+          fontSize: 14,
+          lineHeight: 21,
+          fontFamily:
+            (StyleSheet.flatten(style)?.fontSize || 14) >= 18
+              ? c.display
+              : undefined,
+        },
+        style,
+      ]}
     >
       {children}
     </Text>
+  );
+}
+export function Display({
+  style,
+  ...props
+}: React.ComponentProps<typeof Text>): React.JSX.Element {
+  const c = usePalette();
+  return (
+    <Label
+      {...props}
+      style={[
+        {
+          fontFamily: c.display,
+          fontSize: 24,
+          lineHeight: 30,
+          letterSpacing: -0.6,
+        },
+        style,
+      ]}
+    />
   );
 }
 export function Button({
@@ -52,35 +111,52 @@ export function Button({
   onPress,
   quiet = false,
   disabled = false,
+  accessory,
 }: {
   title: string;
   onPress: () => void;
   quiet?: boolean;
   disabled?: boolean;
+  accessory?: string;
 }): React.JSX.Element {
   const c = usePalette();
+  const { look } = useLook();
   return (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
-        paddingHorizontal: 18,
-        paddingVertical: 13,
-        borderRadius: 14,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: look === "b" ? 16 : look === "c" ? 4 : 8,
         backgroundColor: quiet ? c.line : c.accent,
-        opacity: disabled ? 0.45 : pressed ? 0.7 : 1,
+        borderWidth: 1,
+        borderColor: quiet ? c.line : "transparent",
+        opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
+        transform: [{ scale: pressed ? 0.98 : 1 }],
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: accessory ? "space-between" : "center",
+        gap: 8,
       })}
     >
       <Label
         style={{
-          color: quiet ? c.ink : c.accentInk,
+          fontSize: 13,
           fontWeight: "600",
+          color: quiet ? c.ink : c.accentInk,
           textAlign: "center",
+          fontFamily: look === "b" ? c.display : undefined,
         }}
       >
         {title}
       </Label>
+      {accessory && (
+        <Label style={{ fontSize: 13, color: quiet ? c.ink : c.accentInk }}>
+          {accessory}
+        </Label>
+      )}
     </Pressable>
   );
 }
@@ -98,9 +174,10 @@ export function Input(
           color: c.ink,
           borderWidth: 1,
           borderColor: c.line,
-          borderRadius: 16,
+          borderRadius: c.radius,
           padding: 16,
-          fontSize: 16,
+          fontSize: 14,
+          lineHeight: 22,
         },
         props.style,
       ]}
@@ -119,76 +196,204 @@ export function Page({
   children: React.ReactNode;
 }): React.JSX.Element {
   const c = usePalette();
+  const { look } = useLook();
   const insets = useSafeAreaInsets();
-  const dark = useColorScheme() === "dark";
+  const pulse = usePulse(look === "a");
   return (
-    <LinearGradient
-      colors={
-        dark
-          ? ["#251642", "#131f39", "#291c38"]
-          : ["#e7dcff", "#e1f5ff", "#fff0df"]
-      }
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <LinearGradient colors={c.gradient} style={{ flex: 1 }}>
+      {look === "a" && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              filter: Platform.OS === "web" ? "blur(56px)" : undefined,
+              opacity: pulse.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.32, 0.55],
+              }),
+              transform: [
+                {
+                  translateY: pulse.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-16, 20],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={["#6555af66", "#5c509500", "#10111600"]}
+            style={{
+              position: "absolute",
+              width: 440,
+              height: 400,
+              borderRadius: 200,
+              top: -200,
+              left: -160,
+            }}
+          />
+          <LinearGradient
+            colors={["#254d7940", "#20375000"]}
+            style={{
+              position: "absolute",
+              width: 360,
+              height: 480,
+              borderRadius: 200,
+              top: 180,
+              right: -250,
+            }}
+          />
+        </Animated.View>
+      )}
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1 }}
         contentContainerStyle={{
           padding: 24,
-          paddingTop: Math.max(insets.top, 24) + 16,
-          paddingBottom: 110,
-          gap: 20,
+          paddingTop: Math.max(insets.top, 24) + 8,
+          paddingBottom: 100,
+          gap: look === "c" ? 28 : 20,
           width: "100%",
-          maxWidth: 650,
+          maxWidth: 430,
           alignSelf: "center",
         }}
-        style={{ flex: 1 }}
       >
-        <View>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: look === "c" ? 12 : 8,
+          }}
+        >
+          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+            <View
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: look === "b" ? 8 : 6,
+                backgroundColor: c.accent,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: c.accentInk,
+                  fontSize: 18,
+                  fontWeight: "700",
+                  lineHeight: 23,
+                }}
+              >
+                k
+              </Text>
+            </View>
+            <Label
+              style={{
+                fontSize: 13,
+                fontWeight: "600",
+                letterSpacing: look === "c" ? 1.5 : 0.1,
+              }}
+            >
+              keystone{look === "b" ? " ✦" : ""}
+            </Label>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 3,
+                backgroundColor: look === "a" ? "#b7db9a" : c.accent,
+              }}
+            />
+            <Label style={{ fontSize: 10, color: c.muted, letterSpacing: 0.4 }}>
+              YOUR SPACE, OFFLINE
+            </Label>
+          </View>
+        </View>
+        <View style={{ gap: 8 }}>
           <Label
             style={{
-              fontSize: 11,
-              letterSpacing: 2,
+              fontSize: 10,
+              fontWeight: "600",
+              letterSpacing: 1.5,
               color: c.muted,
-              fontWeight: "700",
             }}
           >
             {eyebrow.toUpperCase()}
           </Label>
-          <Label
+          <Display
+            accessibilityRole="header"
             style={{
-              fontSize: 38,
-              lineHeight: 44,
-              fontWeight: "700",
-              letterSpacing: -1.2,
-              marginTop: 8,
+              fontSize: look === "b" ? 38 : look === "c" ? 40 : 32,
+              lineHeight: look === "a" ? 38 : 44,
+              fontWeight: look === "a" ? "600" : "400",
+              letterSpacing: look === "b" ? -1.4 : -0.8,
             }}
           >
             {title}
+          </Display>
+          <Label
+            style={{
+              fontSize: 13,
+              color: c.muted,
+              lineHeight: 21,
+              maxWidth: 320,
+            }}
+          >
+            {subtitle}
           </Label>
-          <Label style={{ color: c.muted, marginTop: 4 }}>{subtitle}</Label>
         </View>
         {children}
+        <Label
+          style={{
+            fontSize: 10,
+            textAlign: "center",
+            color: c.muted,
+            letterSpacing: 1,
+            marginTop: 8,
+          }}
+        >
+          A LITTLE STRUCTURE. ROOM TO BE YOU.
+        </Label>
       </ScrollView>
     </LinearGradient>
   );
 }
 export function Card({
   children,
+  area,
+  style,
 }: {
   children: React.ReactNode;
+  area?: Area;
+  style?: React.ComponentProps<typeof View>["style"];
 }): React.JSX.Element {
   const c = usePalette();
+  const { look } = useLook();
   return (
     <Glass
-      style={{
-        backgroundColor: c.card,
-        borderRadius: 26,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: c.line,
-        gap: 12,
-      }}
+      style={[
+        {
+          backgroundColor: look === "b" && area ? c.tint[area] : c.card,
+          borderRadius: c.radius,
+          padding: look === "c" ? 20 : 16,
+          borderWidth: 1,
+          borderColor: c.line,
+          gap: 12,
+          boxShadow:
+            look === "b"
+              ? "0px 3px 0px #55325412"
+              : look === "a"
+                ? "inset 0px 1px 0px #ffffff06"
+                : undefined,
+        },
+        style,
+      ]}
     >
       {children}
     </Glass>

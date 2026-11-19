@@ -1,14 +1,26 @@
 import React, { useState } from "react";
-import { Platform } from "react-native";
+import { Platform, Pressable, View } from "react-native";
 import { EveningToggle } from "../lib/evening-toggle";
-import { reminderMessage } from '../lib/reminder-message';
+import { reminderMessage } from "../lib/reminder-message";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useStore } from "../lib/store";
-import { Button, Card, Input, Label, Page } from "../lib/ui";
+import {
+  Button,
+  Card,
+  Input,
+  Label,
+  Page,
+  usePalette,
+  Display,
+} from "../lib/ui";
+import { looks } from "../lib/looks";
+import { useLook } from "../lib/use-look";
 import { scheduleReminders } from "../lib/reminders";
 export default function Settings(): React.JSX.Element {
   const { data, save, key, setKey } = useStore();
+  const { look, setLook } = useLook();
+  const c = usePalette();
   const [draft, setDraft] = useState(key);
   const [time, setTime] = useState(data.morning);
   const [evening, setEvening] = useState(data.evening);
@@ -45,6 +57,72 @@ export default function Settings(): React.JSX.Element {
       title="Less friction. More you."
       subtitle="Private by default. A little help when you want it."
     >
+      <Card>
+        <Display>Looks</Display>
+        <Label style={{ color: c.muted, fontSize: 12 }}>
+          Same quiet helper. A different kind of energy.
+        </Label>
+        <View style={{ gap: 8 }}>
+          {(["a", "b", "c"] as const).map((value) => (
+            <Pressable
+              key={value}
+              role="radio"
+              aria-checked={look === value}
+              onPress={() => {
+                setLook(value).catch((e) => setMessage(String(e)));
+              }}
+              style={{
+                padding: 16,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: look === value ? c.accent : c.line,
+                backgroundColor: looks[value].bg,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <View
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  backgroundColor: looks[value].accent,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Label
+                  style={{ color: looks[value].accentInk, fontWeight: "700" }}
+                >
+                  {value.toUpperCase()}
+                </Label>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Label
+                  style={{
+                    color: looks[value].ink,
+                    fontFamily: looks[value].display,
+                    fontSize: 18,
+                  }}
+                >
+                  {looks[value].name}
+                </Label>
+                <Label style={{ color: looks[value].muted, fontSize: 11 }}>
+                  {value === "a"
+                    ? "A little command center."
+                    : value === "b"
+                      ? "Big plans. Good energy."
+                      : "Less, but better."}
+                </Label>
+              </View>
+              <Label style={{ color: looks[value].accent }}>
+                {look === value ? "✓" : ""}
+              </Label>
+            </Pressable>
+          ))}
+        </View>
+      </Card>
       <Card>
         <Label style={{ fontWeight: "700", fontSize: 20 }}>
           Your data stays with you
@@ -120,9 +198,7 @@ export default function Settings(): React.JSX.Element {
             }
             save({ ...data, morning: time, evening })
               .then(() => scheduleReminders(data.tasks, time, evening, true))
-              .then((ok) =>
-                setMessage(reminderMessage(ok,Platform.OS)),
-              )
+              .then((ok) => setMessage(reminderMessage(ok, Platform.OS)))
               .catch((e) => setMessage(String(e)));
           }}
         />

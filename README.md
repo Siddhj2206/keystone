@@ -1,4 +1,47 @@
-# Keystone
+# Keystone · three looks
+
+Choose **Settings → Looks → A / B / C**. The choice is saved in local SQLite and overrides the build-time default:
+
+- **A · Aurora Night** — a precise, Raycast-inspired command center: near-black, soft ambient glow, compact icon rows and inline voice capture. System SF on iOS.
+- **B · Candy Pop** — Nunito Black, pastel sticker cards, emoji area badges, springy oversized checkboxes and a real completion streak.
+- **C · Paper Zen** — Fraunces, warm paper, generous whitespace, quiet area dots and an editorial focus list.
+
+All three retain native Liquid Glass cards and tabs on supported iOS versions, plus the SwiftUI evening toggle. Web and older iOS use themed translucent surfaces. Reduced Motion disables the ambient/pulse animations and completion springs. Web is centered at a maximum width of 430px.
+
+```sh
+# From the repo root; use a fresh browser origin/profile for first-launch demo data.
+EXPO_PUBLIC_LOOK=a EXPO_PUBLIC_DEMO=1 npm run web -w mobile -- --port 8090
+```
+
+`EXPO_PUBLIC_LOOK=a|b|c` selects the default only when there is no saved look. `EXPO_PUBLIC_DEMO=1` seeds OS coursework, a DBMS quiz, internship applications, LeetCode and gym **only when no database state exists**; it never replaces an existing planner. Omit it for an empty planner. Fonts are bundled locally; no runtime Google Fonts request is needed.
+
+## Build and run in an iOS simulator (macOS, Xcode 26)
+
+Install Xcode 26, its iOS simulator runtime, Node 22 and CocoaPods. From the repo root:
+
+```sh
+npm ci
+cd apps/mobile
+export EXPO_PUBLIC_LOOK=a  # a = Aurora Night, b = Candy Pop, c = Paper Zen
+export EXPO_PUBLIC_DEMO=1 # optional; first launch only
+npx expo prebuild -p ios --no-install
+cd ios && pod install && cd ..
+xcodebuild -workspace ios/Keystone.xcworkspace -scheme Keystone \
+  -configuration Release -sdk iphonesimulator \
+  -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath build-sim CODE_SIGNING_ALLOWED=NO build
+xcrun simctl list devices available
+open -a Simulator
+# Choose an available iPhone simulator UDID from the list above:
+export SIMULATOR_UDID='<your-iPhone-simulator-UDID>'
+xcrun simctl boot "$SIMULATOR_UDID" # skip if already booted
+xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+xcrun simctl install "$SIMULATOR_UDID" build-sim/Build/Products/Release-iphonesimulator/Keystone.app
+xcrun simctl launch "$SIMULATOR_UDID" com.siddhj2206.keystone
+```
+
+This Release simulator build embeds the JS bundle and does not need Metro. Change looks instantly in Settings. To change the compiled default, re-export `EXPO_PUBLIC_LOOK` and rebuild; a saved selection still wins. For a **disposable simulator only**, `xcrun simctl uninstall "$SIMULATOR_UDID" com.siddhj2206.keystone` resets first-launch state (deletes all planner data), after which install/launch again. Simulator signing does not need a paid developer account. Actual Liquid Glass and voice permissions require native runtime testing; web screenshots are not evidence of native rendering.
+## About Keystone
 
 A calm, local-first goals planner for a busy brain. Brain-dump with text or voice; Keystone splits it into actionable tasks, finds dates, and links tasks to short- and long-term goals. Today highlights just three next steps. No accounts, backend, subscription or push service.
 

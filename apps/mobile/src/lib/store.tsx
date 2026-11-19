@@ -4,6 +4,8 @@ import * as SQLite from "expo-sqlite";
 import * as SecureStore from "expo-secure-store";
 import { Capture, Goal, Task, id, organize, hasCaptureContent } from "@keystone/core";
 import { createStateQueue } from './state-queue';
+import { Look } from './looks';
+import { demoData } from './demo';
 
 interface Data {
   tasks: Task[];
@@ -11,6 +13,7 @@ interface Data {
   captures: Capture[];
   morning: string;
   evening: boolean;
+  look?: Look;
 }
 const empty: Data = {
   tasks: [],
@@ -29,6 +32,7 @@ interface Store {
   save: (data: Data) => Promise<void>;
   capture: (text: string, source: "text" | "voice") => Promise<string>;
   updateTask: (task: Task) => Promise<void>;
+  setLook: (look:Look)=>Promise<void>;
 }
 const Context = createContext<Store>(null!);
 export function StoreProvider({
@@ -53,6 +57,7 @@ export function StoreProvider({
         "SELECT json FROM state WHERE id=1",
       );
       if (row) await state.update(() => JSON.parse(row.json));
+      else if(process.env.EXPO_PUBLIC_DEMO==='1') await state.update(latest=>({...latest,...demoData()}));
       if (Platform.OS !== "web")
         setKeyState((await SecureStore.getItemAsync("gemini-key")) || "");
       setReady(true);
@@ -102,7 +107,7 @@ export function StoreProvider({
   }
   return (
     <Context.Provider
-      value={{ data, ready, error, key, setKey, save, capture, updateTask }}
+      value={{ data, ready, error, key, setKey, save, capture, updateTask, setLook:(look)=>state.update(latest=>({...latest,look})) }}
     >
       {children}
     </Context.Provider>

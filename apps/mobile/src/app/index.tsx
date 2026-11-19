@@ -3,15 +3,21 @@ import { View } from "react-native";
 import { router } from "expo-router";
 import { focusTasks } from "@keystone/core";
 import { useStore } from "../lib/store";
-import { Button, Card, Label, Page, usePalette } from "../lib/ui";
+import { Button, Card, Label, Page, usePalette, Display } from "../lib/ui";
 import { TaskCard } from "../lib/task-card";
+import { useLook } from "../lib/use-look";
+import { streakOf } from "../lib/streak";
 export default function Today(): React.JSX.Element {
   const { data } = useStore();
   const c = usePalette();
+  const { look } = useLook();
   const now = new Date();
   const focus = focusTasks(data.tasks);
   const done = data.tasks.filter((t) => t.status === "done").length;
-  const remaining = data.tasks.filter((t) => t.status !== "done");
+  const focusIds = new Set(focus.map((t) => t.id));
+  const remaining = data.tasks.filter(
+    (t) => t.status !== "done" && !focusIds.has(t.id),
+  );
   const overdue = remaining.filter(
     (t) => t.dueDate && Date.parse(t.dueDate) < now.getTime(),
   );
@@ -29,14 +35,34 @@ export default function Today(): React.JSX.Element {
         month: "long",
         day: "numeric",
       })}
-      title="A little focus. A lot less noise."
-      subtitle="You don't have to do it all. Just the next right thing."
+      title={
+        look === "a"
+          ? "Your day, distilled."
+          : look === "b"
+            ? "Small wins.\nBig energy."
+            : "Make space for\nwhat matters."
+      }
+      subtitle={
+        look === "a"
+          ? "A few good priorities. Everything else can wait."
+          : look === "b"
+            ? "A little progress looks good on you."
+            : "Not everything needs your attention today."
+      }
     >
       <Card>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <Label style={{ fontWeight: "600" }}>Your pace, not a race</Label>
+          <Label style={{ fontWeight: "500", fontSize: 12 }}>
+            {look === "b"
+              ? `🔥 ${streakOf(data.tasks)} day streak`
+              : look === "c"
+                ? "A gentle measure of progress"
+                : "A little momentum"}
+          </Label>
           <Label style={{ color: c.accent }}>
-            {done} / {data.tasks.length} done
+            <Label style={{ fontSize: 12, color: c.accent }}>
+              {done} / {data.tasks.length} done
+            </Label>
           </Label>
         </View>
         <View style={{ height: 5, backgroundColor: c.line, borderRadius: 8 }}>
@@ -50,13 +76,27 @@ export default function Today(): React.JSX.Element {
           />
         </View>
         <Label style={{ fontSize: 12, color: c.muted }}>
-          Every small step counts. A fresh start is always here.
+          {look === "b"
+            ? "One tiny win is still a win. You’ve got this!"
+            : look === "c"
+              ? "Slow is a perfectly good speed."
+              : "One thing at a time is a strategy."}
         </Label>
       </Card>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Label style={{ fontWeight: "700", fontSize: 20 }}>Today’s focus</Label>
+        <Display
+          style={{
+            fontSize: look === "a" ? 14 : 22,
+            lineHeight: 28,
+            fontWeight: look === "a" ? "600" : "400",
+          }}
+        >
+          Today’s focus
+        </Display>
         <Label style={{ fontSize: 12, color: c.muted }}>
-          JUST {focus.length} THINGS
+          {look === "c"
+            ? `${String(focus.length).padStart(2, "0")} priorities`
+            : `TOP ${focus.length} PICKS`}
         </Label>
       </View>
       {focus.map((t, i) => (
@@ -69,10 +109,24 @@ export default function Today(): React.JSX.Element {
             Drop in what’s on your mind. We’ll find a place for it.
           </Label>
           <Button
-            title="＋  Clear your head"
+            title="+  Clear your head"
             onPress={() => router.navigate("/capture")}
           />
         </Card>
+      )}
+      {!!focus.length && (
+        <Button
+          quiet
+          title={
+            look === "a"
+              ? "+ Capture a thought"
+              : look === "b"
+                ? "+ Got a thought? Catch it."
+                : "+ Leave a thought here"
+          }
+          accessory={look === "a" ? "↗" : undefined}
+          onPress={() => router.navigate("/capture")}
+        />
       )}
       {overdue.length > 0 && (
         <>

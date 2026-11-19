@@ -4,7 +4,7 @@ import { usePalette } from "./ui";
 export function TabNavigation(): React.JSX.Element {
   const c = usePalette();
   return (
-    <NativeTabs tintColor={c.accent}>
+    <NativeTabs tintColor={c.accent} backgroundColor={c.bg} labelStyle={{color:c.muted,fontSize:10}}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="sun.max.fill" />

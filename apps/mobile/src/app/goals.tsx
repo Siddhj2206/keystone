@@ -4,6 +4,7 @@ import { Goal, id } from "@keystone/core";
 import { useStore } from "../lib/store";
 import { Button, Card, Input, Label, Page, usePalette } from "../lib/ui";
 import { TaskCard } from "../lib/task-card";
+import { AreaIcon } from '../lib/area-icon';
 export default function Goals(): React.JSX.Element {
   const { data, save } = useStore();
   const c = usePalette();
@@ -26,7 +27,7 @@ export default function Goals(): React.JSX.Element {
   return (
     <Page
       eyebrow="The bigger picture"
-      title="Small steps. Meaningful things."
+      title="The bigger picture."
       subtitle="A place for what matters now — and what comes next."
     >
       {(["short", "long"] as const).map((h) => (
@@ -50,7 +51,8 @@ export default function Goals(): React.JSX.Element {
                       setSelected(selected === g.id ? undefined : g.id)
                     }
                   >
-                    <Card>
+                    <Card area={g.area}>
+                      <AreaIcon area={g.area}/>
                       <Label
                         style={{
                           fontSize: 11,
@@ -165,7 +167,7 @@ export default function Goals(): React.JSX.Element {
         />
         <Button
           quiet
-          title="＋ Add a goal"
+          title="+ Add a goal"
           onPress={() => {
             if (!title.trim()) return;
             save({

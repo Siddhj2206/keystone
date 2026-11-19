@@ -2,22 +2,25 @@ import React from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { usePalette } from "./ui";
+import { useLook } from './use-look';
 export function TabNavigation(): React.JSX.Element {
   const c = usePalette();
+  const {look}=useLook();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: "transparent" },
         tabBarStyle: {
-          backgroundColor: c.card,
+          backgroundColor: c.bg,
           borderTopColor: c.line,
-          height: 85,
-          paddingTop: 10,
-          paddingBottom: 24,
+          height: 76,
+          paddingTop: 8,
+          paddingBottom: 12,
         },
         tabBarActiveTintColor: c.accent,
         tabBarInactiveTintColor: c.muted,
+        tabBarLabelStyle:{fontSize:10,fontWeight:'500',fontFamily:look==='b'?c.display:undefined},
       }}
     >
       {(
@@ -34,7 +37,7 @@ export function TabNavigation(): React.JSX.Element {
           options={{
             title,
             tabBarIcon: ({ color }) => (
-              <Ionicons name={icon} color={typeof color === 'string' ? color : c.accent} size={24} />
+              <Ionicons name={icon} color={typeof color === 'string' ? color : c.accent} size={20} />
             ),
           }}
         />

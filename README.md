@@ -28,6 +28,8 @@ Expo automatically resolves npm workspaces with Metro. SQLite web uses WASM and 
 
 ## Install on iPhone via AppDrop
 
+Install or update Keystone at **https://appdrop.app/d/ht7jeyqp93**. Successful builds pushed to `main` update this AppDrop link automatically.
+
 1. Download `keystone.ipa` from the repository's latest GitHub Release, or unzip the `keystone-ipa` artifact on a successful Actions run.
 2. Go to **https://appdrop.app** and upload the IPA. Follow its current signing and installation steps on your iPhone.
 3. If prompted, trust the resulting profile in iPhone Settings.
